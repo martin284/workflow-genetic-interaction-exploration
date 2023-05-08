@@ -1,0 +1,149 @@
+---
+title: "Boxplots for Expression based Genetic Dependency Detection"
+author: "Martin Brand"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output:
+  bookdown::html_document2:
+    code_folding: hide
+    fig_caption: yes
+    number_sections: no
+    theme: cerulean
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+    toc_collapsed: yes
+    fig_width: 8 
+    fig_height: 4 
+  bookdown::pdf_document2:
+    keep_tex: yes
+    fig_caption: yes
+    number_sections: no
+    toc: yes
+    toc_depth: 3
+graphics: yes
+header-includes:
+- \makeatletter\renewcommand*{\fps@figure}{h}\makeatother
+- \usepackage{placeins}
+geometry: margin=1in
+fontsize: 18pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(ggplot2)
+library(gridExtra)
+library(ggpubr)
+library(readxl)
+library(kableExtra)
+```
+
+```{r}
+classification.gene <- "FUBP1"
+target.gene <- "FUBP1"
+```
+
+# Data Preprocessing
+```{r, warning=FALSE}
+path <-
+  "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
+dep.scores.DRIVE <- readRDS(paste0(path,"dep.scores.DRIVE.rds"))
+dep.scores.Achilles <- readRDS(paste0(path,"dep.scores.Achilles.rds"))
+
+path <- "C:/Users/Martin/Documents/Master/Thesis/CCLE_data/Expression_Files/"
+expression.data.HUGO <- readRDS(paste0(path,"cleaned.expression.data.rds"))
+
+source("helper_functions/create.classification.table.expr.R")
+
+rm(path)
+```
+
+```{r}
+expression.class.gene <- 
+  t(expression.data.HUGO[expression.data.HUGO$geneID==classification.gene,-1])
+expression.class.gene <- as.data.frame(expression.class.gene)
+expression.class.gene$CCLE_ID <- rownames(expression.class.gene)
+rownames(expression.class.gene) <- NULL
+colnames(expression.class.gene) <- c("expr.level","CCLE_ID")
+
+ggplot(expression.class.gene,aes(expr.level)) +
+  geom_histogram(bins = 40)
+
+rm(expression.data.HUGO)
+```
+
+# Classification Table
+```{r}
+sample.share <- 0.2
+
+class.tables <- create.classification.table.expr(
+  sample.share,expression.class.gene,dep.scores.DRIVE,dep.scores.Achilles)
+
+class.table.DRIVE <- class.tables$DRIVE
+class.table.Achilles <- class.tables$Achilles
+
+rm(sample.share, expression.class.gene,class.tables)
+
+# show tables
+class.table.DRIVE %>%
+  head() %>%
+  kbl(caption = "Classification Table in DRIVE") %>%
+  kable_styling()
+class.table.Achilles %>%
+  head %>%
+  kbl(caption = "Classification Table in Achilles") %>%
+  kable_styling()
+```
+
+
+# Do the distributions of both sampes differ?
+```{r fig.width=8}
+# DRIVE
+dep.scores.DRIVE.target.gene <- dep.scores.DRIVE[c("CCLE_ID",target.gene)]
+dep.scores.DRIVE.target.gene <- merge(dep.scores.DRIVE.target.gene,
+                                      class.table.DRIVE,by="CCLE_ID")
+dep.scores.DRIVE.target.gene <- na.omit(dep.scores.DRIVE.target.gene)
+colnames(dep.scores.DRIVE.target.gene)[2] <- "dep.score"
+
+boxplot.DRIVE <-
+  ggplot(dep.scores.DRIVE.target.gene, aes(x=isDeleterious,y=dep.score)) +
+  geom_violin() +
+  geom_boxplot(show.legend = F) +
+  geom_jitter(shape=21,width=0.3,aes(fill=isDeleterious),show.legend = F) +
+  stat_compare_means(method = "t.test") +
+  ylab(paste(target.gene,"Dependency Score")) +
+  scale_x_discrete(labels=c(paste0("Low expression in ",classification.gene),
+                            paste0("High expression in ",
+                                   classification.gene))) +
+  ggtitle("DRIVE")
+
+# Achilles
+dep.scores.Achilles.target.gene <- dep.scores.Achilles[c("CCLE_ID",target.gene)]
+dep.scores.Achilles.target.gene <- merge(dep.scores.Achilles.target.gene,
+                                      class.table.Achilles,by="CCLE_ID")
+dep.scores.Achilles.target.gene <- na.omit(dep.scores.Achilles.target.gene)
+colnames(dep.scores.Achilles.target.gene)[2] <- "dep.score"
+
+boxplot.Achilles <-
+  ggplot(dep.scores.Achilles.target.gene, aes(x=isDeleterious,y=dep.score)) +
+  geom_violin() +
+  geom_boxplot(show.legend = F) +
+  geom_jitter(shape=21,width=0.3,aes(fill=isDeleterious),show.legend = F) +
+  stat_compare_means(method = "t.test") +
+  ylab(paste(target.gene,"Dependency Score")) +
+  scale_x_discrete(labels=c(paste0("Low expression in ",classification.gene),
+                            paste0("High expression in ",
+                                   classification.gene))) +
+  ggtitle("Achilles")
+
+# show results
+grid.arrange(boxplot.DRIVE,boxplot.Achilles,ncol=2)
+
+rm(boxplot.DRIVE,boxplot.Achilles,class.table.Achilles,class.table.DRIVE,
+   dep.scores.DRIVE,dep.scores.Achilles,dep.scores.DRIVE.target.gene,
+   dep.scores.Achilles.target.gene,classification.gene,target.gene)
+```
+
+

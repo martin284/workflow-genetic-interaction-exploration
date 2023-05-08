@@ -1,0 +1,161 @@
+---
+title: "Boxplots for Genetic Dependency Detection"
+author: "Martin Brand"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output:
+  bookdown::html_document2:
+    code_folding: hide
+    fig_caption: yes
+    number_sections: no
+    theme: cerulean
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+    toc_collapsed: yes
+    fig_width: 8 
+    fig_height: 4 
+  bookdown::pdf_document2:
+    keep_tex: yes
+    fig_caption: yes
+    number_sections: no
+    toc: yes
+    toc_depth: 3
+graphics: yes
+header-includes:
+- \makeatletter\renewcommand*{\fps@figure}{h}\makeatother
+- \usepackage{placeins}
+geometry: margin=1in
+fontsize: 18pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(ggplot2)
+library(gridExtra)
+library(ggpubr)
+library(readxl)
+library(kableExtra)
+```
+
+```{r}
+genotype <- "FUBP1"
+target.gene <- "FUBP1"
+```
+
+```{r, warning=FALSE}
+data.dir <-
+  "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
+cancer.names <- readRDS(paste0(data.dir,"cancer.names.rds"))
+CCLE.mut <- readRDS(paste0(data.dir,"CCLE.mut.rds"))
+dep.scores.DRIVE <- readRDS(paste0(data.dir,"dep.scores.DRIVE.rds"))
+dep.scores.Achilles <- readRDS(paste0(data.dir,"dep.scores.Achilles.rds"))
+
+class.table.MSI <- read_excel(paste0(data.dir, "supplementary_table.xlsx"))
+# keep only imporant cols
+class.table.MSI <- class.table.MSI[,c(1,4)]
+# remove NAs
+class.table.MSI[class.table.MSI=="NA"] <- NA
+class.table.MSI <- na.omit(class.table.MSI)
+# remove rows which are classified as intermediate
+class.table.MSI <- class.table.MSI[class.table.MSI$CCLE_MSI!="indeterminate",]
+
+source("helper_functions/create.classification.table.mut.vs.non.mut.R")
+source("helper_functions/create.classification.table.del.vs.non.del.R")
+source("helper_functions/calc.mean.diffs.and.p.values.R")
+source("helper_functions/create_barcharts_classifications.R")
+source("helper_functions/create.dep.score.boxplots.R")
+source("helper_functions/create.dep.score.boxplots.MSI.R")
+```
+
+# Classification Table
+```{r, eval=TRUE}
+class.table.mut <- create.classification.table.mut.vs.non.mut(
+                                                CCLE.mut, cancer.names,
+                                                genotype, dep.scores.DRIVE,
+                                                dep.scores.Achilles)
+
+colnames(class.table.mut$Achilles)[2] <- "isMutated"
+colnames(class.table.mut$DRIVE)[2] <- "isMutated"
+
+class.table.del <- create.classification.table.del.vs.non.del(
+                                                CCLE.mut, cancer.names,
+                                                genotype, dep.scores.DRIVE,
+                                                dep.scores.Achilles)
+
+class.table.Achilles <- merge(class.table.mut$Achilles,class.table.del$Achilles,
+                          by="CCLE_ID")
+
+class.table.DRIVE <- merge(class.table.mut$DRIVE,class.table.del$DRIVE,
+                          by="CCLE_ID")
+
+# head(class.table.Achilles)
+
+class.table.DRIVE %>%
+  head() %>%
+  kbl() %>%
+  kable_styling()
+
+class.table.Achilles %>%
+  head() %>%
+  kbl() %>%
+  kable_styling()
+```
+
+# Do the distributions of both sampes differ?
+```{r}
+boxplot.target.gene.Achilles <- 
+  create.dep.score.boxplots(dep.scores.Achilles,target.gene,
+                            class.table.Achilles,"Achilles")
+
+boxplot.target.gene.DRIVE <- 
+  create.dep.score.boxplots(dep.scores.DRIVE,target.gene,
+                            class.table.DRIVE,"DRIVE")
+
+grid.arrange(boxplot.target.gene.Achilles,boxplot.target.gene.DRIVE,ncol=2)
+```
+
+<!-- # What do the lower data points have in common? -->
+<!-- ```{r} -->
+<!-- dep.scores.Achilles.WRN <- dep.scores.Achilles[c('CCLE_ID','WRN')] -->
+<!-- dep.scores.Achilles.WRN.mut.in.PUF60 <- merge(dep.scores.Achilles.WRN, -->
+<!--                                               class.table.Achilles,by="CCLE_ID") -->
+<!-- dep.scores.Achilles.WRN.mut.in.PUF60$isDeleterious <- NULL -->
+<!-- dep.scores.Achilles.WRN.mut.in.PUF60 <- dep.scores.Achilles.WRN.mut.in.PUF60[ -->
+<!--   dep.scores.Achilles.WRN.mut.in.PUF60$isMutated,] -->
+<!-- dep.scores.Achilles.WRN.mut.in.PUF60 <- merge( -->
+<!--   dep.scores.Achilles.WRN.mut.in.PUF60,class.table.MSI,by="CCLE_ID") -->
+<!-- dep.scores.Achilles.WRN.mut.in.PUF60 <- -->
+<!--   dep.scores.Achilles.WRN.mut.in.PUF60[ -->
+<!--     order(dep.scores.Achilles.WRN.mut.in.PUF60$WRN,decreasing=T),] -->
+
+
+
+<!-- dep.scores.DRIVE.WRN <- dep.scores.DRIVE[c('CCLE_ID','WRN')] -->
+<!-- dep.scores.DRIVE.WRN.mut.in.PUF60 <- merge(dep.scores.DRIVE.WRN, -->
+<!--                                               class.table.DRIVE,by="CCLE_ID") -->
+<!-- dep.scores.DRIVE.WRN.mut.in.PUF60$isDeleterious <- NULL -->
+<!-- dep.scores.DRIVE.WRN.mut.in.PUF60 <- dep.scores.DRIVE.WRN.mut.in.PUF60[ -->
+<!--   dep.scores.DRIVE.WRN.mut.in.PUF60$isMutated,] -->
+<!-- dep.scores.DRIVE.WRN.mut.in.PUF60 <- merge( -->
+<!--   dep.scores.DRIVE.WRN.mut.in.PUF60,class.table.MSI,by="CCLE_ID") -->
+<!-- dep.scores.DRIVE.WRN.mut.in.PUF60 <- -->
+<!--   dep.scores.DRIVE.WRN.mut.in.PUF60[ -->
+<!--     order(dep.scores.DRIVE.WRN.mut.in.PUF60$WRN,decreasing=T),] -->
+<!-- ``` -->
+
+# Comparison to MSI/MSS against WRN
+```{r}
+boxplot.target.gene.Achilles.MSI <- 
+  create.dep.score.boxplots.MSI(dep.scores.Achilles,"WRN",
+                            class.table.MSI,"Achilles")
+
+boxplot.target.gene.DRIVE.MSI <- 
+  create.dep.score.boxplots.MSI(dep.scores.DRIVE,"WRN",
+                            class.table.MSI,"DRIVE")
+
+grid.arrange(boxplot.target.gene.Achilles.MSI,boxplot.target.gene.DRIVE.MSI,ncol=2)
+```
+

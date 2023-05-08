@@ -44,8 +44,8 @@ library(gridExtra)
 library(ComplexHeatmap)
 ```
 
+First, we define the input data for the workflow: the gene we use for classification into high and low expression cell lines, the sample share that determines how many cell lines are considered and the target genes to be displayed in the volcano plots.
 ```{r}
-# classification.gene <- "SNRPF"
 target.genes <- c("FUBP1","SF1","U2AF1","U2AF2","SNRPB","SNRPD1","SNRPD2",
                   "SNRPD3","SNRPE","SNRPF","SNRPG","PUF60","SMNDC1",
                   "DNAJC8","RBM17","CHERP","U2SURP","DHX15","DDX46","CELF6",
@@ -59,6 +59,7 @@ sample.share <- 0.2
 ```
 
 # Data Preprocessing
+We import the datasets and functions.
 ```{r, eval=FALSE}
 library(CePa)
 path <- "C:/Users/Martin/Documents/Master/Thesis/CCLE_data/"
@@ -101,6 +102,7 @@ source("helper_functions/create.classification.table.expr.R")
 
 # Data Exploration
 ## Gene expression distribution of `r classification.gene.HUGO` in each cell line
+To investigate the expression level of the chosen classification gene, we plot the distribution of expression levels in the different cell lines.
 ```{r}
 expression.class.gene <- as.data.frame(
   t(filter(expression.data.entrez,entrezgene_id==classification.gene))[-1,])
@@ -116,6 +118,7 @@ rm(expression.data.entrez, classification.gene)
 ```
 
 ## Intersection of cell lines in Achilles or DRIVE and CCLE
+In the workflow, we can only use cell lines that appear in both the CCLE and Achilles or DRIVE datasets. To check whether we have enough cell lines for the analysis, we determine the intersections.
 ```{r}
 cell.lines.DRIVE.CCLE <- intersect(dep.scores.DRIVE$CCLE_ID,
                                    expression.class.gene$CCLE_ID)
@@ -135,6 +138,7 @@ rm(cell.lines.DRIVE.CCLE,cell.lines.Achilles.CCLE,count.table)
 
 # Data Analysis
 ## Classification table
+We create two samples. One sample contains the overexpressed cell lines and the other contains the underexpressed cell lines. We summarise the samples in a classification table that shows whether a cell line is overexpressed or underexpressed.
 ```{r}
 class.tables <- create.classification.table.expr(
   sample.share,expression.class.gene,dep.scores.DRIVE,dep.scores.Achilles)
@@ -155,7 +159,8 @@ class.table.Achilles %>%
   kable_styling()
 ```
 
-## Welch test
+## Welch's t-test
+We calculate the mean values of the dependency scores of both samples, take the difference and calculate the p-value using Welch's t-test.
 ```{r}
 res <- calc.mean.diffs.and.p.values(dep.scores.DRIVE,dep.scores.Achilles,
                                     class.table.DRIVE,class.table.Achilles)
@@ -175,6 +180,7 @@ rm(plot.welch.DRIVE,plot.welch.Achilles)
 ```
 
 ## Wilcoxon test
+We repeat the calculation of the p-values with the Wilcoxon test.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.wilc.DRIVE <- create_volcano_plot(res,"DRIVE","wilc",target.genes)
 
@@ -186,7 +192,8 @@ rm(plot.wilc.DRIVE,plot.wilc.Achilles)
 ```
 
 
-## Bayes test
+## Bayes moderated t-test
+And finally, we calculate the p-values with the Bayes moderated t-test.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.bayes.DRIVE <- create_volcano_plot(res,"DRIVE","bayes",target.genes)
 
@@ -200,6 +207,7 @@ rm(plot.bayes.DRIVE,plot.bayes.Achilles,target.genes)
 
 
 ## Upset plots
+To investigate whether genes have significant p-values in multiple tests and datasets, we create an upset plot. Each set contains all genes that are significant in the corresponding dataset and test method.
 ```{r fig.width=8}
 # extract significant genes from res object
 threshold <- 0.05
@@ -256,6 +264,7 @@ rm(threshold,res,set.order,comb.mat)
 ```
 
 ## Significant genes
+We list the genes that appear in the maximum number of significant gene sets.
 ```{r}
 # create Boolean matrix for gene in sets
 sign.genes.total <- unique(unlist(sign.genes))

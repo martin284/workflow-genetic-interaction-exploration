@@ -56,6 +56,7 @@ cell.lines.Achilles <- as.data.frame(rownames(dep.scores.Achilles))
 colnames(cell.lines.Achilles) <- "CCLE_ID"
 
 CCLE.mut <- readRDS(paste0(data.dir,"CCLE.mut.rds"))
+CCLE.mut <- CCLE.mut[CCLE.mut$Variant_Classification!="Silent",]
 
 cancer.names <- read.csv(paste0(data.dir, "DepMap-2018q3-celllines.csv"))
 cancer.names <- cancer.names[,c(1,2)]

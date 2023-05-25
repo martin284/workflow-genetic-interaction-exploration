@@ -52,8 +52,20 @@ path <-
 dep.scores.DRIVE <- readRDS(paste0(path,"dep.scores.DRIVE.rds"))
 dep.scores.Achilles <- readRDS(paste0(path,"dep.scores.Achilles.rds"))
 
-path <- "C:/Users/Martin/Documents/Master/Thesis/CCLE_data/Expression_Files/"
-expression.data.HUGO <- readRDS(paste0(path,"cleaned.expression.data.rds"))
+path <- "C:/Users/Martin/Documents/Master/Thesis/CCLE_data/"
+
+# load CCLE dataset
+expression.data <- readRDS(paste0(path,"Expression_Files/expression.data.rds"))
+
+# change rownames format
+expression.data.entrez <- expression.data
+rownames(expression.data.entrez) <- 
+  substr(rownames(expression.data),1,nchar(rownames(expression.data))-3)
+# make rownames to first column
+expression.data.entrez$entrezgene_id <- rownames(expression.data.entrez)
+rownames(expression.data.entrez) <- NULL
+expression.data.entrez <- expression.data.entrez %>%
+  select(entrezgene_id, everything())
 
 source("helper_functions/create.classification.table.expr.R")
 

@@ -1,0 +1,108 @@
+---
+title: "Mutation statistics in U2 genes"
+author: "Martin Brand"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output:
+  bookdown::html_document2:
+    code_folding: hide
+    fig_caption: yes
+    number_sections: no
+    theme: cerulean
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+    toc_collapsed: yes
+    fig_width: 8 
+    fig_height: 4 
+  bookdown::pdf_document2:
+    keep_tex: yes
+    fig_caption: yes
+    number_sections: no
+    toc: yes
+    toc_depth: 3
+graphics: yes
+header-includes:
+- \makeatletter\renewcommand*{\fps@figure}{h}\makeatother
+- \usepackage{placeins}
+geometry: margin=1in
+fontsize: 18pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(readr)
+```
+
+```{r}
+U2.genes <- c("FUBP1","SF1","U2AF1","U2AF2","SNRPB","SNRPD1","SNRPD2",
+              "SNRPD3","SNRPE","SNRPF","SNRPG","PUF60","SMNDC1",
+              "DNAJC8","RBM17","CHERP","U2SURP","DHX15","DDX46")
+
+data.dir <-
+  "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
+
+dep.scores <- read_rds(file.path(data.dir, 'DepMap_18Q4_data.rds'))
+
+dep.scores.DRIVE <- as.data.frame(dep.scores[["DRIVE"]])
+cell.lines.DRIVE <- as.data.frame(rownames(dep.scores.DRIVE))
+colnames(cell.lines.DRIVE) <- "CCLE_ID"
+dep.scores.Achilles <- as.data.frame(dep.scores[["CRISPR"]])
+cell.lines.Achilles <- as.data.frame(rownames(dep.scores.Achilles))
+colnames(cell.lines.Achilles) <- "CCLE_ID"
+
+CCLE.mut <- readRDS(paste0(data.dir,"CCLE.mut.rds"))
+
+cancer.names <- read.csv(paste0(data.dir, "DepMap-2018q3-celllines.csv"))
+cancer.names <- cancer.names[,c(1,2)]
+colnames(cancer.names) <- c("DepMap_ID","CCLE_ID")
+
+CCLE.mut <- merge(CCLE.mut,cancer.names,by="DepMap_ID")
+CCLE.mut$DepMap_ID <- NULL
+CCLE.mut <- CCLE.mut %>% select("CCLE_ID", everything())
+
+CCLE.mut.DRIVE <- merge(CCLE.mut,cell.lines.DRIVE,by="CCLE_ID")
+CCLE.mut.Achilles <- merge(CCLE.mut,cell.lines.Achilles,by="CCLE_ID")
+```
+
+```{r}
+CCLE.mut.U2.DRIVE <- CCLE.mut.DRIVE[CCLE.mut.DRIVE$Hugo_Symbol %in% U2.genes,]
+CCLE.mut.U2.DRIVE <- CCLE.mut.U2.DRIVE[order(
+  CCLE.mut.U2.DRIVE$isDeleterious,decreasing=T),]
+CCLE.mut.U2.DRIVE <- CCLE.mut.U2.DRIVE[!duplicated(CCLE.mut.U2.DRIVE[c(1,2)]),]
+mut.stats.DRIVE <- as.data.frame(table(CCLE.mut.U2.DRIVE$Hugo_Symbol))
+colnames(mut.stats.DRIVE)[1] <- "gene.name"
+mut.stats.DRIVE <- mut.stats.DRIVE[order(mut.stats.DRIVE$Freq,decreasing = T),]
+
+CCLE.mut.U2.Achilles <- 
+  CCLE.mut.Achilles[CCLE.mut.Achilles$Hugo_Symbol %in% U2.genes,]
+CCLE.mut.U2.Achilles <- 
+  CCLE.mut.U2.Achilles[order(CCLE.mut.U2.Achilles$isDeleterious,decreasing=T),]
+CCLE.mut.U2.Achilles <- 
+  CCLE.mut.U2.Achilles[!duplicated(CCLE.mut.U2.Achilles[c(1,2)]),]
+mut.stats.Achilles <- as.data.frame(table(CCLE.mut.U2.Achilles$Hugo_Symbol))
+colnames(mut.stats.Achilles)[1] <- "gene.name"
+mut.stats.Achilles <- 
+  mut.stats.Achilles[order(mut.stats.Achilles$Freq,decreasing = T),]
+```
+
+```{r fig.width=12}
+ggplot(mut.stats.DRIVE,aes(x=reorder(gene.name,-Freq),y=Freq)) +
+  geom_bar(stat = "identity", fill="steelblue") +
+  ylab("Number of mutated cell lines") +
+  xlab("Gene name") +
+  ggtitle("Mutated cell lines in DRIVE")
+
+ggplot(mut.stats.Achilles,aes(x=reorder(gene.name,-Freq),y=Freq)) +
+  geom_bar(stat = "identity", fill="steelblue") +
+  ylab("Number of mutated cell lines") +
+  xlab("Gene name") +
+  ggtitle("Mutated cell lines in Achilles")
+```
+
+
+

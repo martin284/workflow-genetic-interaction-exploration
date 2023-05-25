@@ -4,15 +4,15 @@ create.classification.table.mut.vs.non.mut <- function(CCLE_mut, cancer_names,
   # keep only cell lines with mutations in the gene given by gene_ID
   CCLE_mut_gene_ID <- CCLE_mut[CCLE_mut$Hugo_Symbol==gene_ID,]
   
+  # remove silent mutations
+  CCLE_mut_gene_ID <- CCLE_mut_gene_ID[
+    CCLE_mut_gene_ID$Variant_Classification!="Silent",]
+  
   # remove mutation entries with more harmless mutation
   # in genes with multiple mutations
   CCLE_mut_gene_ID <- CCLE_mut_gene_ID[order(CCLE_mut_gene_ID$isDeleterious,
                                              decreasing=T),]
   CCLE_mut_gene_ID <- CCLE_mut_gene_ID[!duplicated(CCLE_mut_gene_ID$DepMap_ID),]
-  
-  # remove silent mutations
-  CCLE_mut_gene_ID <- CCLE_mut_gene_ID[
-    CCLE_mut_gene_ID$Variant_Classification!="Silent",]
   
   # replace DepMap_IDs by CCLE names
   CCLE_mut_table <- merge(CCLE_mut_gene_ID, cancer_names, by="DepMap_ID",

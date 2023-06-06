@@ -46,14 +46,18 @@ library(ComplexHeatmap)
 
 First, we define the input data for the workflow: the gene we use for classification into high and low expression cell lines, the sample share that determines how many cell lines are considered and the target genes to be displayed in the volcano plots.
 ```{r}
-target.genes <- c("FUBP1","SF1","U2AF1","U2AF2","SNRPB","SNRPD1","SNRPD2",
-                  "SNRPD3","SNRPE","SNRPF","SNRPG","PUF60","SMNDC1",
-                  "DNAJC8","RBM17","CHERP","U2SURP","DHX15","DDX46","CELF6",
-                  "PCBP1")
+# target.genes <- c("FUBP1","SF1","U2AF1","U2AF2","SNRPB","SNRPD1","SNRPD2",
+#                   "SNRPD3","SNRPE","SNRPF","SNRPG","PUF60","SMNDC1",
+#                   "DNAJC8","RBM17","CHERP","U2SURP","DHX15","DDX46")
+
+# target.genes <- c("EIF3A","SMNDC1")
+# target.genes <- c("FUBP1","U2AF2")
+# target.genes <- c("PUF60")
+target.genes <- c("SNRPF")
 
 # Entrez ID 
-classification.gene.HUGO <- "FUBP1"
-classification.gene <- "8880"
+classification.gene.HUGO <- "SNRPF"
+classification.gene <- "6636"
 
 sample.share <- 0.2
 ```

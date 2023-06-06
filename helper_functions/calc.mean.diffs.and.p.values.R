@@ -93,12 +93,12 @@ calc.mean.diffs.and.p.values <- function(dep_scores_DRIVE,
   # DRIVE
   p_values_welch_DRIVE$p_adj <- p.adjust(p_values_welch_DRIVE$p_value,
                                          method = "BH")
-  p_values_welch_DRIVE$log <- -log(p_values_welch_DRIVE$p_adj)
+  p_values_welch_DRIVE$log <- -log10(p_values_welch_DRIVE$p_adj)
   
   # Achilles
   p_values_welch_Achilles$p_adj <- p.adjust(p_values_welch_Achilles$p_value,
                                          method = "BH")
-  p_values_welch_Achilles$log <- -log(p_values_welch_Achilles$p_adj)
+  p_values_welch_Achilles$log <- -log10(p_values_welch_Achilles$p_adj)
   
   ############### calculate p-values with wilcoxon test ########################
   
@@ -124,12 +124,12 @@ calc.mean.diffs.and.p.values <- function(dep_scores_DRIVE,
   # DRIVE
   p_values_wilc_DRIVE$p_adj <- p.adjust(p_values_wilc_DRIVE$p_value,
                                          method = "BH")
-  p_values_wilc_DRIVE$log <- -log(p_values_wilc_DRIVE$p_adj)
+  p_values_wilc_DRIVE$log <- -log10(p_values_wilc_DRIVE$p_adj)
   
   # Achilles
   p_values_wilc_Achilles$p_adj <- p.adjust(p_values_wilc_Achilles$p_value,
                                             method = "BH")
-  p_values_wilc_Achilles$log <- -log(p_values_wilc_Achilles$p_adj)
+  p_values_wilc_Achilles$log <- -log10(p_values_wilc_Achilles$p_adj)
   
   ########## calculate p-values with Bayes moderated t-test ####################
   
@@ -155,7 +155,7 @@ calc.mean.diffs.and.p.values <- function(dep_scores_DRIVE,
   p_values_bayes_Achilles$p_adj <- test_results_bayes_Achilles$adj.P.Val
   
   # transform p-values
-  p_values_bayes_Achilles$log <- -log(p_values_bayes_Achilles$p_adj)
+  p_values_bayes_Achilles$log <- -log10(p_values_bayes_Achilles$p_adj)
   
   # do the same with DRIVE
   vec_DRIVE <- dep_scores_DRIVE_merged$isDeleterious
@@ -179,7 +179,7 @@ calc.mean.diffs.and.p.values <- function(dep_scores_DRIVE,
   p_values_bayes_DRIVE$gene <- rownames(test_results_bayes_DRIVE)
   p_values_bayes_DRIVE$p_adj <- test_results_bayes_DRIVE$adj.P.Val
   
-  p_values_bayes_DRIVE$log <- -log(p_values_bayes_DRIVE$p_adj)
+  p_values_bayes_DRIVE$log <- -log10(p_values_bayes_DRIVE$p_adj)
   
   ############## return all results ############################################
   

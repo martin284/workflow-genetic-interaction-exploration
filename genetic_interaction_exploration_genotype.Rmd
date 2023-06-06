@@ -47,14 +47,13 @@ library(gridExtra)
 # Analyzed Genes and Target
 We define the genes for classification, the expected target gene and the classification criteria.
 ```{r}
-gene1 <- "BRCA1"
-gene2 <- "BRCA2"
+gene1 <- "FUBP1"
+gene2 <- "U2AF2"
 # target.genes <- c("FUBP1","SF1","U2AF1","U2AF2","SNRPB","SNRPD1","SNRPD2",
 #                   "SNRPD3","SNRPE","SNRPF","SNRPG","PUF60","SMNDC1",
-#                   "DNAJC8","RBM17","CHERP","U2SURP","DHX15","DDX46","CELF6",
-#                   "PCBP1")
-target.genes <- c("PARP1","PARP2")
-# possible methods: "del.vs.non.del", "del.vs.non.mut","mut.vs.non.mut"
+#                   "DNAJC8","RBM17","CHERP","U2SURP","DHX15","DDX46")
+target.genes <- c("U2AF2","FUBP1")
+# possible methods: "del.vs.non.mut","mut.vs.non.mut"
 classification.method <- "mut.vs.non.mut"
 ```
 In this analysis, the genes used for classification are `r gene1` and `r gene2`. The expected target gene is `r target.genes`.
@@ -110,7 +109,6 @@ We load the helper functions.
 # load helper functions
 source("helper_functions/create.mutation.counts.plot.R")
 source("helper_functions/create.mutation.counts.plot.mark.R")
-source("helper_functions/create.classification.table.del.vs.non.del.R")
 source("helper_functions/create.classification.table.mut.vs.non.mut.R")
 source("helper_functions/create.classification.table.del.vs.non.mut.R")
 source("helper_functions/merge.class.tables.R")
@@ -144,7 +142,6 @@ rm(mutation.plot.DRIVE,mutation.plot.Achilles)
 We create classification tables that show us for each cell line whether the selected genes are deleteriously mutated or not. Therefore we create one table where we check whether `r gene1` is deleteriously mutated, another table where we do the same for `r gene2` and a third table where we check whether at least one of `r gene1` and `r gene2` is deleteriously mutated.
 ```{r, eval=TRUE}
 create.classification.table <- switch(classification.method,
-                "del.vs.non.del" = create.classification.table.del.vs.non.del,
                 "del.vs.non.mut" = create.classification.table.del.vs.non.mut,
                 "mut.vs.non.mut" = create.classification.table.mut.vs.non.mut)
 
@@ -240,7 +237,7 @@ The Welch t-test checks whether the means of two samples are identical. The prer
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.welch.DRIVE.gene1 <- create_volcano_plot(test.results.gene1,"DRIVE",
                                               "welch",target.genes,
-                                              show_sign_line=T)
+                                              show_sign_line=F)
 
 plot.welch.Achilles.gene1 <- create_volcano_plot(test.results.gene1,"Achilles",
                                                 "welch",target.genes)

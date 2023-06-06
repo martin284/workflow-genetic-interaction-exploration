@@ -16,10 +16,10 @@ create_volcano_plot <- function(test_results, dataset, test_method,
   
   test_method_UC <- paste(toupper(substr(test_method, 1, 1)),
                           substr(test_method, 2, nchar(test_method)), sep="")
-  title <- paste0(test_method_UC," Test with ",dataset)
+  title <- paste0(dataset)
   
   if (show_sign_line) {
-    sign_line <- -log(0.05)
+    sign_line <- -log10(0.05)
   }
   else {
     sign_line <- NULL
@@ -29,11 +29,13 @@ create_volcano_plot <- function(test_results, dataset, test_method,
   result_plot <- ggplot(data=results, aes(x=D_ND, y=log, label=to_label)) +
     geom_point(color="tomato3") +
     geom_point(data = results[results$to_label != "",], color="black") +
-    xlab('mean difference') +
-    ylab('-log(P_adj)') +
+    xlab('Mean difference') +
+    ylab(expression(-log[10](P[adj]))) +
     geom_label_repel(max.overlaps = Inf, nudge_y = 0.5) +
     geom_hline(yintercept=sign_line) +
-    ggtitle(title)
+    ggtitle(title) +
+    theme(plot.title = element_text(hjust = 0.5),
+          text = element_text(size = 15))
   
   return(result_plot)
 }

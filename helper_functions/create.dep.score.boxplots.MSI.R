@@ -1,5 +1,5 @@
 create.dep.score.boxplots.MSI <- function(dep.scores,target.gene,class.table,
-                                          dataset) {
+                                          dataset,show.y.label=T) {
   dep.scores.target.gene <- dep.scores[c("CCLE_ID",target.gene)]
   dep.scores.target.gene <- merge(dep.scores.target.gene,
                                   class.table,by="CCLE_ID")
@@ -10,12 +10,18 @@ create.dep.score.boxplots.MSI <- function(dep.scores,target.gene,class.table,
   dep.scores.target.gene$CCLE_MSI <- factor(dep.scores.target.gene$CCLE_MSI,
                                             levels=c("MSS","MSI"))
   
+  if(show.y.label==T) {
+    y.label <- paste("Dependency Score for",target.gene)
+  } else {
+    y.label <- ""
+  }
+  
   boxplot.target.gene <- 
     ggplot(dep.scores.target.gene, aes(x=CCLE_MSI,y=dep.score)) +
     geom_boxplot() +
     geom_jitter(shape=21,width=0.3,aes(fill=CCLE_MSI)) +
     stat_compare_means(method = "wilcox.test",label.x=1.7) +
-    ylab(paste(target.gene,"Dependency Score")) +
+    ylab(y.label) +
     scale_x_discrete(labels=c("MSS","MSI")) +
     theme(legend.position="none",
           plot.title = element_text(hjust = 0.5),

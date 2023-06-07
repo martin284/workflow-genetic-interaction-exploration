@@ -94,25 +94,27 @@ class.table$Achilles %>%
 ```{r}
 boxplot.target.gene.Achilles <- 
   create.dep.score.boxplots(dep.scores.Achilles,target.gene,
-                            class.table$Achilles,"Achilles")
+                            class.table$Achilles,"Achilles",
+                            show.y.label = F)
 
 boxplot.target.gene.DRIVE <- 
   create.dep.score.boxplots(dep.scores.DRIVE,target.gene,
                             class.table$DRIVE,"DRIVE")
 
-grid.arrange(boxplot.target.gene.Achilles,boxplot.target.gene.DRIVE,ncol=2)
+grid.arrange(boxplot.target.gene.DRIVE,boxplot.target.gene.Achilles,ncol=2)
 ```
 
 # Comparison to MSI/MSS against WRN
 ```{r}
 boxplot.target.gene.Achilles.MSI <- 
   create.dep.score.boxplots.MSI(dep.scores.Achilles,"WRN",
-                            class.table.MSI,"Achilles")
+                            class.table.MSI,"Achilles",
+                            show.y.label=F)
 
 boxplot.target.gene.DRIVE.MSI <- 
   create.dep.score.boxplots.MSI(dep.scores.DRIVE,"WRN",
                             class.table.MSI,"DRIVE")
 
-grid.arrange(boxplot.target.gene.Achilles.MSI,boxplot.target.gene.DRIVE.MSI,ncol=2)
+grid.arrange(boxplot.target.gene.DRIVE.MSI,boxplot.target.gene.Achilles.MSI,ncol=2)
 ```
 

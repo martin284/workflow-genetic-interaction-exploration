@@ -91,18 +91,24 @@ mut.stats.Achilles <-
   mut.stats.Achilles[order(mut.stats.Achilles$Freq,decreasing = T),]
 ```
 
-```{r fig.width=12}
+```{r fig.width=14}
 ggplot(mut.stats.DRIVE,aes(x=reorder(gene.name,-Freq),y=Freq)) +
-  geom_bar(stat = "identity", fill="steelblue") +
+  geom_bar(stat = "identity", fill="tomato3") +
   ylab("Number of mutated cell lines") +
   xlab("Gene name") +
-  ggtitle("Mutated cell lines in DRIVE")
+  ggtitle("DRIVE") +
+  theme(plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 20),
+        axis.text = element_text(size = 10))
 
 ggplot(mut.stats.Achilles,aes(x=reorder(gene.name,-Freq),y=Freq)) +
-  geom_bar(stat = "identity", fill="steelblue") +
+  geom_bar(stat = "identity", fill="tomato3") +
   ylab("Number of mutated cell lines") +
   xlab("Gene name") +
-  ggtitle("Mutated cell lines in Achilles")
+  ggtitle("Achilles") +
+  theme(plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 20),
+        axis.text = element_text(size = 10))
 ```
 
 

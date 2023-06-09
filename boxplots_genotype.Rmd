@@ -41,8 +41,8 @@ library(kableExtra)
 ```
 
 ```{r}
-genotype <- "FUBP1"
-target.gene <- "FUBP1"
+genotype <- "BRCA1"
+target.gene <- "PARP2"
 ```
 
 ```{r, warning=FALSE}
@@ -90,16 +90,63 @@ class.table$Achilles %>%
   kable_styling()
 ```
 
+```{r,eval=FALSE}
+gene1 <- "BRCA1"
+gene2 <- "BRCA2"
+
+class.table.gene1 <- create.classification.table.mut.vs.non.mut(
+                                                CCLE.mut, cancer.names,
+                                                gene1, dep.scores.DRIVE,
+                                                dep.scores.Achilles)
+class.table.gene2 <- create.classification.table.mut.vs.non.mut(
+                                                CCLE.mut, cancer.names,
+                                                gene2, dep.scores.DRIVE,
+                                                dep.scores.Achilles)
+
+source("helper_functions/merge.class.tables.R")
+
+# merge tables
+class.table.comb.DRIVE <- merge.class.tables(class.table.gene1$DRIVE,
+                                             class.table.gene2$DRIVE)
+
+class.table.comb.Achilles <- merge.class.tables(class.table.gene1$Achilles,
+                                             class.table.gene2$Achilles)
+
+class.table <- list(Achilles=class.table.comb.Achilles,
+                    DRIVE=class.table.comb.DRIVE)
+
+colnames(class.table$Achilles)[2] <- "isMutated"
+colnames(class.table$DRIVE)[2] <- "isMutated"
+
+class.table$DRIVE %>%
+  head() %>%
+  kbl() %>%
+  kable_styling()
+
+class.table$Achilles %>%
+  head() %>%
+  kbl() %>%
+  kable_styling()
+```
+
+
 # Do the distributions of both samples differ?
 ```{r}
 boxplot.target.gene.Achilles <- 
-  create.dep.score.boxplots(dep.scores.Achilles,target.gene,
-                            class.table$Achilles,"Achilles",
+  create.dep.score.boxplots(dep.scores=dep.scores.Achilles,
+                            target.gene=target.gene,
+                            genotype=genotype,
+                            class.table=class.table$Achilles,
+                            dataset="Achilles",
                             show.y.label = F)
 
 boxplot.target.gene.DRIVE <- 
-  create.dep.score.boxplots(dep.scores.DRIVE,target.gene,
-                            class.table$DRIVE,"DRIVE")
+  create.dep.score.boxplots(dep.scores=dep.scores.DRIVE,
+                            target.gene=target.gene,
+                            genotype=genotype,
+                            class.table=class.table$DRIVE,
+                            dataset="DRIVE",
+                            show.y.label = T)
 
 grid.arrange(boxplot.target.gene.DRIVE,boxplot.target.gene.Achilles,ncol=2)
 ```
@@ -117,4 +164,3 @@ boxplot.target.gene.DRIVE.MSI <-
 
 grid.arrange(boxplot.target.gene.DRIVE.MSI,boxplot.target.gene.Achilles.MSI,ncol=2)
 ```
-

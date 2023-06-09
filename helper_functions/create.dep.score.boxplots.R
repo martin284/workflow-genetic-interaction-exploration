@@ -1,4 +1,6 @@
-create.dep.score.boxplots <- function(dep.scores,target.gene,class.table,
+create.dep.score.boxplots <- function(dep.scores,target.gene,
+                                      genotype,
+                                      class.table,
                                       dataset,pos.p.value=1.7,
                                       sample.name.1 = "-non-mutated",
                                       sample.name.2 = "-mutated",
@@ -21,8 +23,8 @@ create.dep.score.boxplots <- function(dep.scores,target.gene,class.table,
     geom_jitter(shape=21,width=0.3,aes(fill=isMutated)) +
     stat_compare_means(method = "wilcox.test",label.x=pos.p.value) +
     ylab(y.label) +
-    scale_x_discrete(labels=c(paste0(target.gene,sample.name.1),
-    paste0(target.gene,sample.name.2))) +
+    scale_x_discrete(labels=c(paste0(genotype,sample.name.1),
+    paste0(genotype,sample.name.2))) +
     theme(legend.position="none",
           plot.title = element_text(hjust = 0.5),
           text = element_text(size = 15),

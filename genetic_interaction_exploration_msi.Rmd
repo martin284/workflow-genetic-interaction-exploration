@@ -135,10 +135,12 @@ plot.welch.Achilles <- create_volcano_plot(test_results=res,
 
 plot.welch <- grid.arrange(plot.welch.DRIVE,plot.welch.Achilles,ncol=2)
 
-# # save plot as svg
+# save plot
 # plot_path <- "C:/Users/Martin/Documents/Master/Thesis/report/plots/"
 # ggsave(file=paste0(plot_path,"volcano_MSI_welch.svg"), plot=plot.welch,
 #        width=10)
+# ggsave(file=paste0(plot_path,"volcano_MSI_welch.png"), plot=plot.welch,
+       # width=10)
 
 rm(plot.welch.DRIVE,plot.welch.Achilles,plot.welch)
 ```
@@ -160,8 +162,10 @@ plot.wilc.Achilles <- create_volcano_plot(test_results=res,
 
 plot.wilc <- grid.arrange(plot.wilc.DRIVE,plot.wilc.Achilles,ncol=2)
 
-# # save plot as svg
+# save plot
 # ggsave(file=paste0(plot_path,"volcano_MSI_wilc.svg"), plot=plot.wilc,
+#        width=10)
+# ggsave(file=paste0(plot_path,"volcano_MSI_wilc.png"), plot=plot.wilc,
 #        width=10)
 
 rm(plot.wilc.DRIVE,plot.wilc.Achilles,plot.wilc)
@@ -185,8 +189,10 @@ plot.bayes.Achilles <- create_volcano_plot(test_results=res,
 
 plot.bayes <- grid.arrange(plot.bayes.DRIVE,plot.bayes.Achilles,ncol=2)
 
-# # save plot as svg
+# save plot
 # ggsave(file=paste0(plot_path,"volcano_MSI_bayes.svg"), plot=plot.bayes,
+#        width=10)
+# ggsave(file=paste0(plot_path,"volcano_MSI_bayes.png"), plot=plot.bayes,
 #        width=10)
 
 rm(plot.bayes.DRIVE,plot.bayes.Achilles,target.genes,plot.bayes,plot_path)

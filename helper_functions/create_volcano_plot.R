@@ -1,6 +1,7 @@
 create_volcano_plot <- function(test_results, dataset, test_method,
                                 labeled_genes=NULL,
-                                show_sign_line=TRUE){
+                                show_sign_line=TRUE,
+                                show_y_label=TRUE){
   mean_diffs_str <- paste0("mean_differences_",dataset)
   mean_diffs <- test_results[[mean_diffs_str]]
   p_adj_log_str <- paste0("p_values_",test_method,'_',dataset)

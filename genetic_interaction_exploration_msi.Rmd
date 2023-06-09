@@ -120,39 +120,76 @@ rm(class.table.DRIVE,class.table.Achilles,class.table,dep.scores.DRIVE,
    dep.scores.Achilles)
 ```
 
-```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.welch.DRIVE <- create_volcano_plot(res,"DRIVE","welch",target.genes)
+```{r eval=TRUE, fig.height=4, fig.width=10, message=F}
+plot.welch.DRIVE <- create_volcano_plot(test_results=res,
+                                        dataset="DRIVE",
+                                        test_method="welch",
+                                        labeled_genes=target.genes,
+                                        show_y_label=TRUE)
 
-plot.welch.Achilles <- create_volcano_plot(res,"Achilles","welch",target.genes)
+plot.welch.Achilles <- create_volcano_plot(test_results=res,
+                                        dataset="Achilles",
+                                        test_method="welch",
+                                        labeled_genes=target.genes,
+                                        show_y_label=FALSE)
 
-grid.arrange(plot.welch.DRIVE,plot.welch.Achilles,ncol=2)
+plot.welch <- grid.arrange(plot.welch.DRIVE,plot.welch.Achilles,ncol=2)
 
-rm(plot.welch.DRIVE,plot.welch.Achilles)
+# # save plot as svg
+# plot_path <- "C:/Users/Martin/Documents/Master/Thesis/report/plots/"
+# ggsave(file=paste0(plot_path,"volcano_MSI_welch.svg"), plot=plot.welch,
+#        width=10)
+
+rm(plot.welch.DRIVE,plot.welch.Achilles,plot.welch)
 ```
 
 ## Wilcoxon test
 We repeat the calculation of the p-values with the Wilcoxon test.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.wilc.DRIVE <- create_volcano_plot(res,"DRIVE","wilc",target.genes)
+plot.wilc.DRIVE <- create_volcano_plot(test_results=res,
+                                       dataset="DRIVE",
+                                       test_method="wilc",
+                                       labeled_genes=target.genes,
+                                       show_y_label=TRUE)
 
-plot.wilc.Achilles <- create_volcano_plot(res,"Achilles","wilc",target.genes)
+plot.wilc.Achilles <- create_volcano_plot(test_results=res,
+                                       dataset="Achilles",
+                                       test_method="wilc",
+                                       labeled_genes=target.genes,
+                                       show_y_label=FALSE)
 
-grid.arrange(plot.wilc.DRIVE,plot.wilc.Achilles,ncol=2)
+plot.wilc <- grid.arrange(plot.wilc.DRIVE,plot.wilc.Achilles,ncol=2)
 
-rm(plot.wilc.DRIVE,plot.wilc.Achilles)
+# # save plot as svg
+# ggsave(file=paste0(plot_path,"volcano_MSI_wilc.svg"), plot=plot.wilc,
+#        width=10)
+
+rm(plot.wilc.DRIVE,plot.wilc.Achilles,plot.wilc)
 ```
 
 
 ## Bayes moderated t-test
 And finally, we calculate the p-values with the Bayes moderated t-test.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.bayes.DRIVE <- create_volcano_plot(res,"DRIVE","bayes",target.genes)
+plot.bayes.DRIVE <- create_volcano_plot(test_results=res,
+                                       dataset="DRIVE",
+                                       test_method="bayes",
+                                       labeled_genes=target.genes,
+                                       show_y_label=TRUE)
 
-plot.bayes.Achilles <- create_volcano_plot(res,"Achilles","bayes",target.genes)
+plot.bayes.Achilles <- create_volcano_plot(test_results=res,
+                                       dataset="Achilles",
+                                       test_method="bayes",
+                                       labeled_genes=target.genes,
+                                       show_y_label=FALSE)
 
-grid.arrange(plot.bayes.DRIVE,plot.bayes.Achilles,ncol=2)
+plot.bayes <- grid.arrange(plot.bayes.DRIVE,plot.bayes.Achilles,ncol=2)
 
-rm(plot.bayes.DRIVE,plot.bayes.Achilles,target.genes)
+# # save plot as svg
+# ggsave(file=paste0(plot_path,"volcano_MSI_bayes.svg"), plot=plot.bayes,
+#        width=10)
+
+rm(plot.bayes.DRIVE,plot.bayes.Achilles,target.genes,plot.bayes,plot_path)
 ```
 
 

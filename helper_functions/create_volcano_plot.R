@@ -26,12 +26,17 @@ create_volcano_plot <- function(test_results, dataset, test_method,
     sign_line <- NULL
   }
   
+  if (show_y_label) {
+    y_label <- expression(-log[10](P[adj]))
+  } else {
+    y_label <- ""
+  }
   
   result_plot <- ggplot(data=results, aes(x=D_ND, y=log, label=to_label)) +
     geom_point(color="tomato3") +
     geom_point(data = results[results$to_label != "",], color="black") +
     xlab('Mean difference') +
-    ylab(expression(-log[10](P[adj]))) +
+    ylab(y_label) +
     geom_label_repel(max.overlaps = Inf, nudge_y = 0.5) +
     geom_hline(yintercept=sign_line) +
     ggtitle(title) +

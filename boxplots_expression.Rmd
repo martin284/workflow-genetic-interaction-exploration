@@ -42,9 +42,9 @@ library(dplyr)
 ```
 
 ```{r}
-classification.gene.HUGO <- "FUBP1"
-classification.gene.entrez <- "8880"
-target.gene <- "FUBP1"
+classification.gene.HUGO <- "PUF60"
+classification.gene.entrez <- "22827"
+target.gene <- "PUF60"
 ```
 
 # Data Preprocessing
@@ -116,18 +116,26 @@ class.table.Achilles %>%
 # Do the distributions of both sampes differ?
 ```{r}
 boxplot.target.gene.Achilles <- 
-  create.dep.score.boxplots(dep.scores.Achilles,target.gene,
-                            class.table.Achilles,"Achilles",
+  create.dep.score.boxplots(dep.scores=dep.scores.Achilles,
+                            target.gene=target.gene,
+                            genotype=classification.gene.HUGO,
+                            class.table=class.table.Achilles,
+                            dataset="Achilles",
                             pos.p.value = 1.6,
                             sample.name.1 = "-\nlow-expressing",
-                            sample.name.2 = "-\nhighly-expressing")
+                            sample.name.2 = "-\nhighly-expressing",
+                            show.y.label = F)
 
 boxplot.target.gene.DRIVE <- 
-  create.dep.score.boxplots(dep.scores.DRIVE,target.gene,
-                            class.table.DRIVE,"DRIVE",
+  create.dep.score.boxplots(dep.scores=dep.scores.DRIVE,
+                            target.gene=target.gene,
+                            genotype=classification.gene.HUGO,
+                            class.table=class.table.DRIVE,
+                            dataset="DRIVE",
                             pos.p.value = 0.7,
                             sample.name.1 = "-\nlow-expressing",
-                            sample.name.2 = "-\nhighly-expressing")
+                            sample.name.2 = "-\nhighly-expressing",
+                            show.y.label = T)
 
 grid.arrange(boxplot.target.gene.DRIVE,boxplot.target.gene.Achilles,ncol=2)
 ```

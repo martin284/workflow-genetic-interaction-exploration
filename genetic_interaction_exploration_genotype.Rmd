@@ -52,7 +52,7 @@ gene2 <- "U2AF2"
 # target.genes <- c("FUBP1","SF1","U2AF1","U2AF2","SNRPB","SNRPD1","SNRPD2",
 #                   "SNRPD3","SNRPE","SNRPF","SNRPG","PUF60","SMNDC1",
 #                   "DNAJC8","RBM17","CHERP","U2SURP","DHX15","DDX46")
-target.genes <- c("U2AF2","FUBP1")
+target.genes <- c("FUBP1","U2AF2")
 # possible methods: "del.vs.non.mut","mut.vs.non.mut"
 classification.method <- "mut.vs.non.mut"
 ```
@@ -268,13 +268,29 @@ rm(significant.genes.table.DRIVE.gene1,significant.genes.table.Achilles.gene1)
 ## Wilcoxon Test
 The Wilcoxon test checks whether, for randomly selected values X and Y from two samples, the probability of X being greater than Y is equal to the probability of Y being greater than X. The prerequisite is that the data are ordinary, which is fulfilled here.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.wilc.DRIVE.gene1 <- create_volcano_plot(test.results.gene1,"DRIVE","wilc",
-                                       target.genes, show_sign_line=T)
+plot.wilc.DRIVE.gene1 <- create_volcano_plot(test_results=test.results.gene1,
+                                             dataset="DRIVE",
+                                             test_method = "wilc",
+                                             labeled_genes = target.genes,
+                                             show_sign_line=T,
+                                             show_y_label = T)
 
-plot.wilc.Achilles.gene1 <- create_volcano_plot(test.results.gene1,"Achilles",
-                                                "wilc",target.genes)
+plot.wilc.Achilles.gene1 <- create_volcano_plot(test_results=test.results.gene1,
+                                             dataset="Achilles",
+                                             test_method = "wilc",
+                                             labeled_genes = target.genes,
+                                             show_sign_line=T,
+                                             show_y_label = F)
 
-grid.arrange(plot.wilc.DRIVE.gene1,plot.wilc.Achilles.gene1,ncol=2)
+plot <- grid.arrange(plot.wilc.DRIVE.gene1,plot.wilc.Achilles.gene1,ncol=2)
+
+# save plot
+plot_path <- 
+"C:/Users/Martin/Documents/Master/Thesis/report/plots/U2/genotype_based/"
+# ggsave(file=paste0(plot_path,"volcano_SF1_wilc_mut.svg"), plot=plot,
+#        width=10)
+# ggsave(file=paste0(plot_path,"volcano_SF1_wilc_mut.png"), plot=plot,
+# width=10)
 
 rm(plot.wilc.DRIVE.gene1,plot.wilc.Achilles.gene1)
 ```
@@ -484,13 +500,27 @@ rm(significant.genes.table.DRIVE.gene12,significant.genes.table.Achilles.gene12)
 
 ## Wilcoxon Test
 ```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.wilc.DRIVE.gene12 <- create_volcano_plot(test.results.gene12,"DRIVE","wilc",
-                                       target.genes, show_sign_line=T)
+plot.wilc.DRIVE.gene12 <- create_volcano_plot(test_results=test.results.gene12,
+                                              dataset="DRIVE",
+                                              test_method="wilc",
+                                              labeled_genes=target.genes,
+                                              show_sign_line=T,
+                                              show_y_label=T)
 
-plot.wilc.Achilles.gene12 <- create_volcano_plot(test.results.gene12,"Achilles",
-                                                "wilc",target.genes)
+plot.wilc.Achilles.gene12 <- create_volcano_plot(test_results=test.results.gene12,
+                                              dataset="Achilles",
+                                              test_method="wilc",
+                                              labeled_genes=target.genes,
+                                              show_sign_line=T,
+                                              show_y_label=F)
 
-grid.arrange(plot.wilc.DRIVE.gene12,plot.wilc.Achilles.gene12,ncol=2)
+plot <- grid.arrange(plot.wilc.DRIVE.gene12,plot.wilc.Achilles.gene12,ncol=2)
+
+# save plot
+# ggsave(file=paste0(plot_path,"volcano_FUBP1_U2AF2.svg"), plot=plot,
+#        width=10)
+# ggsave(file=paste0(plot_path,"volcano_FUBP1_U2AF2.png"), plot=plot,
+# width=10)
 
 rm(plot.wilc.DRIVE.gene12,plot.wilc.Achilles.gene12)
 ```

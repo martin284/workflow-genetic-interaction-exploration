@@ -54,6 +54,7 @@ First, we define the input data for the workflow: the gene we use for classifica
 # target.genes <- c("FUBP1","U2AF2")
 # target.genes <- c("PUF60")
 target.genes <- c("SNRPF")
+# target.genes <- c("CCND1")
 
 # Entrez ID 
 classification.gene.HUGO <- "SNRPF"
@@ -186,11 +187,27 @@ rm(plot.welch.DRIVE,plot.welch.Achilles)
 ## Wilcoxon test
 We repeat the calculation of the p-values with the Wilcoxon test.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.wilc.DRIVE <- create_volcano_plot(res,"DRIVE","wilc",target.genes)
+plot.wilc.DRIVE <- create_volcano_plot(test_results = res,
+                                       dataset="DRIVE",
+                                       test_method = "wilc",
+                                       labeled_genes=target.genes,
+                                       show_y_label = T)
 
-plot.wilc.Achilles <- create_volcano_plot(res,"Achilles","wilc",target.genes)
+plot.wilc.Achilles <- create_volcano_plot(test_results = res,
+                                       dataset="Achilles",
+                                       test_method = "wilc",
+                                       labeled_genes=target.genes,
+                                       show_y_label = F)
 
-grid.arrange(plot.wilc.DRIVE,plot.wilc.Achilles,ncol=2)
+plot <- grid.arrange(plot.wilc.DRIVE,plot.wilc.Achilles,ncol=2)
+
+# save plot
+# plot_path <- 
+# "C:/Users/Martin/Documents/Master/Thesis/report/plots/U2/expression_based/"
+# ggsave(file=paste0(plot_path,"volcano_SNRPF_wilc_expr.svg"), plot=plot,
+#        width=10)
+# ggsave(file=paste0(plot_path,"volcano_SNRPF_wilc_expr.png"), plot=plot,
+# width=10)
 
 rm(plot.wilc.DRIVE,plot.wilc.Achilles)
 ```

@@ -34,7 +34,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 We import the libraries.
 ```{r, message=FALSE}
-#library(tidyverse)
+Sys.setenv(LANG = "en")
 library(ggplot2)
 library(ggrepel)
 library(matrixTests)
@@ -44,8 +44,8 @@ library(limma)
 library(gridExtra)
 ```
 
-# Analyzed Genes and Target
-We define the genes for classification, the expected target gene and the classification criteria.
+# Classification and target genes
+First, we define the input data for the workflow: the genes we use for classification into (deleteriously-)mutated and non-mutated cell lines, the classification method and the target genes to be displayed in the volcano plots.
 ```{r}
 gene1 <- "FUBP1"
 gene2 <- "U2AF2"
@@ -56,10 +56,9 @@ target.genes <- c("FUBP1","U2AF2")
 # possible methods: "del.vs.non.mut","mut.vs.non.mut"
 classification.method <- "mut.vs.non.mut"
 ```
-In this analysis, the genes used for classification are `r gene1` and `r gene2`. The expected target gene is `r target.genes`.
 
 # Data Preprocessing
-We define the directory for the data and helper functions.
+We define the directory for the data.
 ```{r}
 data.dir <-
   "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"

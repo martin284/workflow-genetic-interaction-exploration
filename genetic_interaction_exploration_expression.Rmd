@@ -32,6 +32,7 @@ fontsize: 18pt
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ```{r, message=FALSE, warning=FALSE}
 Sys.setenv(LANG = "en")
 library(dplyr)
@@ -44,7 +45,8 @@ library(gridExtra)
 library(ComplexHeatmap)
 ```
 
-First, we define the input data for the workflow: the gene we use for classification into high and low expression cell lines, the sample share that determines how many cell lines are considered and the target genes to be displayed in the volcano plots.
+# Classification and target genes
+First, we define the input data for the workflow: the gene we use for classification into high and low expressing cell lines, the sample share that determines how many cell lines are considered and the target genes to be displayed in the volcano plots.
 ```{r}
 # target.genes <- c("FUBP1","SF1","U2AF1","U2AF2","SNRPB","SNRPD1","SNRPD2",
 #                   "SNRPD3","SNRPE","SNRPF","SNRPG","PUF60","SMNDC1",
@@ -64,7 +66,7 @@ sample.share <- 0.2
 ```
 
 # Data Preprocessing
-We import the datasets and functions.
+We load the gene expression dataset ([CCLE expression dataset](https://depmap.org/portal/download/all/?releasename=mRNA+expression&filename=CCLE_Expression_Entrez_2012-09-29.gct)) and the datasets that contains the dependency scores from the projects Achilles and DRIVE ([DepMap datasets](https://figshare.com/articles/dataset/DepMap_Datasets_for_WRN_manuscript/7712756/1)).
 ```{r, eval=FALSE}
 library(CePa)
 path <- "C:/Users/Martin/Documents/Master/Thesis/CCLE_data/"
@@ -99,7 +101,10 @@ dep.scores.DRIVE <- readRDS(paste0(path,"dep.scores.DRIVE.rds"))
 dep.scores.Achilles <- readRDS(paste0(path,"dep.scores.Achilles.rds"))
 
 rm(path,expression.data)
+```
 
+We load the helper functions.
+```{r}
 source("helper_functions/calc.mean.diffs.and.p.values.R")
 source("helper_functions/create_volcano_plot.R")
 source("helper_functions/create.classification.table.expr.R")

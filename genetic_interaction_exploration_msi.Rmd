@@ -32,6 +32,7 @@ fontsize: 18pt
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+We import the libraries.
 ```{r, message=FALSE, warning=FALSE}
 Sys.setenv(LANG = "en")
 library(dplyr)
@@ -45,13 +46,14 @@ library(ComplexHeatmap)
 library(readxl)
 ```
 
+# Target gene
 First, we define the target genes to be displayed in the volcano plots.
 ```{r}
 target.genes <- c("WRN")
 ```
 
 # Data Preprocessing
-We import the datasets and functions.
+We load the MSI status dataset ([CCLE MSI status dataset](https://www.nature.com/articles/s41586-019-1102-x#Sec32)) provided by Chan et al. (2019) and the datasets that contains the dependency scores from the projects Achilles and DRIVE ([DepMap datasets](https://figshare.com/articles/dataset/DepMap_Datasets_for_WRN_manuscript/7712756/1)).
 ```{r, eval=FALSE}
 library(CePa)
 path <- "C:/Users/Martin/Documents/Master/Thesis/CCLE_data/"
@@ -75,11 +77,15 @@ dep.scores.DRIVE <- readRDS(paste0(path,"dep.scores.DRIVE.rds"))
 dep.scores.Achilles <- readRDS(paste0(path,"dep.scores.Achilles.rds"))
 
 rm(path)
+```
 
+We load the helper functions.
+```{r}
 source("helper_functions/calc.mean.diffs.and.p.values.R")
 source("helper_functions/create_volcano_plot.R")
 source("helper_functions/create.classification.table.expr.R")
 ```
+
 
 # Data Analysis
 ## Classification table

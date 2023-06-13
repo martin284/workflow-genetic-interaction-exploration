@@ -33,6 +33,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 We import the libraries.
+
 ```{r, message=FALSE}
 Sys.setenv(LANG = "en")
 library(ggplot2)
@@ -42,10 +43,13 @@ library(dplyr)
 library(cowplot)
 library(limma)
 library(gridExtra)
+library(kableExtra)
 ```
 
 # Classification and target genes
+
 First, we define the input data for the workflow: the genes we use for classification into (deleteriously-)mutated and non-mutated cell lines, the classification method and the target genes to be displayed in the volcano plots.
+
 ```{r}
 gene1 <- "FUBP1"
 gene2 <- "U2AF2"
@@ -58,13 +62,14 @@ classification.method <- "mut.vs.non.mut"
 ```
 
 # Data Preprocessing
-We define the directory for the data.
+
+We load the dataset that contains CCLE IDs and corresponding DepMap IDs for the cell lines ([DepMapIDs](https://depmap.org/portal/download/all/?releasename=DepMap+Public+18Q3&filename=DepMap-2018q3-celllines.csv)), the dataset that contains the mutation information of the cell lines ([CCLE dataset](https://depmap.org/portal/download/all/?releasename=DepMap+Public+19Q2&filename=CCLE_mutations.csv)) and the datasets that contains the dependency scores from the projects Achilles and DRIVE ([DepMap datasets](https://figshare.com/articles/dataset/DepMap_Datasets_for_WRN_manuscript/7712756/1)).
+
 ```{r}
 data.dir <-
   "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
 ```
 
-We load the dataset that contains CCLE IDs and corresponding DepMap IDs for the cell lines ([DepMapIDs](https://depmap.org/portal/download/all/?releasename=DepMap+Public+18Q3&filename=DepMap-2018q3-celllines.csv)), the dataset that contains the mutation information of the cell lines ([CCLE dataset](https://depmap.org/portal/download/all/?releasename=DepMap+Public+19Q2&filename=CCLE_mutations.csv)) and the datasets that contains the dependency scores from the projects Achilles and DRIVE ([DepMap datasets](https://figshare.com/articles/dataset/DepMap_Datasets_for_WRN_manuscript/7712756/1)).
 ```{r, message = FALSE, results="hide", eval=FALSE}
 cancer.names <- read.csv(paste0(data.dir, "DepMap-2018q3-celllines.csv"))
 cancer.names <- cancer.names[,c(1,2)]
@@ -103,7 +108,6 @@ dep.scores.DRIVE <- readRDS(paste0(data.dir,"dep.scores.DRIVE.rds"))
 dep.scores.Achilles <- readRDS(paste0(data.dir,"dep.scores.Achilles.rds"))
 ```
 
-We load the helper functions.
 ```{r}
 # load helper functions
 source("helper_functions/create.mutation.counts.plot.R")
@@ -113,16 +117,16 @@ source("helper_functions/create.classification.table.del.vs.non.mut.R")
 source("helper_functions/merge.class.tables.R")
 source("helper_functions/merge.class.tables.AND.R")
 source("helper_functions/create_barcharts_classifications.R")
-source("helper_functions/plot.mean.diffs.R")
 source("helper_functions/calc.mean.diffs.and.p.values.R")
 source("helper_functions/create_volcano_plot.R")
 source("helper_functions/create.significant.genes.table.R")
 ```
 
+# Classification
 
-# Data Exploration
 ## Mutation Counts
-To find potential genes for classification, we plot the distribution of mutation numbers in the overlapping genes of the CCLE dataset and the datasets DRIVE and Achilles.
+
+To look at how large the sample of mutant cell lines is compared to other mutations, we plot the distribution of mutation numbers in the overlapping cell lines of the CCLE dataset and the datasets DRIVE and Achilles.
 
 ```{r fig.height=4, fig.width=10}
 mutation.plot.DRIVE <- create.mutation.counts.plot.mark("DRIVE",dep.scores.DRIVE,
@@ -138,7 +142,9 @@ rm(mutation.plot.DRIVE,mutation.plot.Achilles)
 ```
 
 ## Classification Tables for `r gene1` and `r gene2`
-We create classification tables that show us for each cell line whether the selected genes are deleteriously mutated or not. Therefore we create one table where we check whether `r gene1` is deleteriously mutated, another table where we do the same for `r gene2` and a third table where we check whether at least one of `r gene1` and `r gene2` is deleteriously mutated.
+
+We create classification tables that show us for each cell line whether the selected genes are (deleteriously-)mutated or not. Therefore we create one table where we check whether `r gene1` is (deleteriously-)mutated, another table where we do the same for `r gene2` and a third table where we check whether at least one of `r gene1` and `r gene2` is (deleteriously-)mutated. For illustration, we show the beginning of the classification table for the cell lines in the DRIVE dataset.
+
 ```{r, eval=TRUE}
 create.classification.table <- switch(classification.method,
                 "del.vs.non.mut" = create.classification.table.del.vs.non.mut,
@@ -160,15 +166,23 @@ class.table.comb.DRIVE <- merge.class.tables(class.table.gene1$DRIVE,
 class.table.comb.Achilles <- merge.class.tables(class.table.gene1$Achilles,
                                              class.table.gene2$Achilles)
 
-knitr::kable(head(class.table.comb.DRIVE), format = "html",
-             table.attr = "style='width:50%;'",
-             caption = "Significant Genes in DRIVE")
+if (classification.method=="del.vs.non.mut") {
+  table.property <- "isDeleterious"
+} else {
+  table.property <- "isMutated"
+}
 
-rm(CCLE.mut,cancer.names)
+head(class.table.comb.DRIVE) %>%
+  kbl(col.names = c("CCLE_ID",table.property)) %>%
+  kable_styling()
+  
+rm(CCLE.mut,cancer.names,table.property)
 ```
 
 ## Classifications for `r gene1`
+
 To check whether the samples sizes regarding `r gene1` for the following statistical tests are sufficient, we plot the number of cell lines for both samples.
+
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 barcharts.gene1 <- create_barcharts_classifications(class.table.gene1$DRIVE,
                                               class.table.gene1$Achilles,
@@ -178,7 +192,9 @@ rm(barcharts.gene1)
 ```
 
 ## Classifications for `r gene2`
-We repeat the plots for `r gene2`.
+
+We repeat this step for `r gene2`.
+
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 barcharts.gene2 <- create_barcharts_classifications(class.table.gene2$DRIVE,
                                               class.table.gene2$Achilles,
@@ -188,7 +204,9 @@ rm(barcharts.gene2)
 ```
 
 ## Classifications for `r gene1`and `r gene2`
-We repeat the plots for `r gene1`and `r gene2`.
+
+And we repeat this step for `r gene1` and `r gene2`. The sample of (deleteriously-)mutated cell lines contains cell lines that are (deleteriously-)mutated in either `r gene1` or `r gene2`.
+
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 barcharts.comb.genes <- create_barcharts_classifications(class.table.comb.DRIVE,
                                               class.table.comb.Achilles,
@@ -197,42 +215,27 @@ plot_grid(barcharts.comb.genes$DRIVE, barcharts.comb.genes$Achilles)
 rm(barcharts.comb.genes)
 ```
 
-# Data Analysis `r gene1`
-In order to detect differences between both samples, we compare them for each gene in the datasets DRIVE and Achilles. The workflow was published by [Chan et al., 2019](https://www.nature.com/articles/s41586-019-1102-x).
+# Comparison in `r gene1`
 
-## Dependency Score Distributions
-```{r eval=FALSE, include=FALSE}
-dep.scores.Achilles.target <- cbind(dep.scores.Achilles["CCLE_ID"],
-                                    dep.scores.Achilles[target.genes[1]])
-
-dep.scores.Achilles.target <- merge(dep.scores.Achilles.target, 
-                                       class.table.gene1$Achilles)
-colnames(dep.scores.Achilles.target)[2] <- "target.gene"
-
-
-ggplot(dep.scores.Achilles.target, aes(isDeleterious,target.gene)) +
-  geom_boxplot() +
-  geom_jitter() +
-  xlab("") +
-  ylab(paste("Dependency Score for",target.genes[1]))
-```
+In order to detect differences between both samples, we compare them for each gene in the datasets DRIVE and Achilles. This method was represented by [Chan et al., 2019](https://www.nature.com/articles/s41586-019-1102-x).
 
 ## Mean Differences
-To test whether the two groups respond differently to the knock out or the knock down of a specific gene, we calculate the mean differences between the two groups for each gene.
-```{r eval=TRUE, fig.height=4, fig.width=10,message=FALSE}
+
+To test whether the two samples respond differently to the knockout or the knockdown of a specific gene, we calculate the mean differences between the dependency scores of both samples for each gene.
+
+```{r}
 test.results.gene1 <- calc.mean.diffs.and.p.values(dep.scores.DRIVE, 
                                            dep.scores.Achilles,
                                            class.table.gene1$DRIVE,
                                            class.table.gene1$Achilles)
 
-plots <- plot.mean.diffs(test.results.gene1)
-grid.arrange(plots$DRIVE,plots$Achilles,ncol=2)
-
-rm(class.table.gene1,plots)
+rm(class.table.gene1)
 ```
 
-## Welch Test
-The Welch t-test checks whether the means of two samples are identical. The prerequisite is that both samples are normally distributed, which we have not yet ensured.
+## Welch's t-test
+
+The Welch's t-test checks whether the means of two samples are identical. The prerequisite is that both samples are normally distributed, which we have not yet ensured.
+
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.welch.DRIVE.gene1 <- create_volcano_plot(test.results.gene1,"DRIVE",
                                               "welch",target.genes,
@@ -246,26 +249,10 @@ grid.arrange(plot.welch.DRIVE.gene1,plot.welch.Achilles.gene1,ncol=2)
 rm(plot.welch.DRIVE.gene1,plot.welch.Achilles.gene1)
 ```
 
-To discover new potential dependencies, the table shows all significant genes.
-```{r}
-significant.genes.table.DRIVE.gene1 <- create.significant.genes.table(
-  test.results.gene1,"DRIVE","welch")
-significant.genes.table.Achilles.gene1 <- create.significant.genes.table(
-  test.results.gene1,"Achilles","welch")
+## Wilcoxon rank-sum test
 
-knitr::kable(significant.genes.table.DRIVE.gene1, format = "html",
-             table.attr = "style='width:50%;'",
-             caption = "Significant Genes in DRIVE")
-knitr::kable(significant.genes.table.Achilles.gene1, format = "html",
-             table.attr = "style='width:50%;'", 
-             caption = "Significant Genes in Achilles")
+The Wilcoxon rank-sum test checks whether, for randomly selected values X and Y from two samples, the probability of X being greater than Y is equal to the probability of Y being greater than X. The prerequisite is that the data are ordinary, which is fulfilled here.
 
-rm(significant.genes.table.DRIVE.gene1,significant.genes.table.Achilles.gene1)
-```
-
-
-## Wilcoxon Test
-The Wilcoxon test checks whether, for randomly selected values X and Y from two samples, the probability of X being greater than Y is equal to the probability of Y being greater than X. The prerequisite is that the data are ordinary, which is fulfilled here.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.wilc.DRIVE.gene1 <- create_volcano_plot(test_results=test.results.gene1,
                                              dataset="DRIVE",
@@ -291,27 +278,11 @@ plot_path <-
 # ggsave(file=paste0(plot_path,"volcano_SF1_wilc_mut.png"), plot=plot,
 # width=10)
 
-rm(plot.wilc.DRIVE.gene1,plot.wilc.Achilles.gene1)
+rm(plot.wilc.DRIVE.gene1,plot.wilc.Achilles.gene1,plot)
 ```
 
-```{r}
-significant.genes.table.DRIVE.gene1 <- create.significant.genes.table(
-  test.results.gene1,"DRIVE","wilc")
-significant.genes.table.Achilles.gene1 <- create.significant.genes.table(
-  test.results.gene1,"Achilles","wilc")
+## Bayes moderated t-test
 
-knitr::kable(significant.genes.table.DRIVE.gene1, format = "html",
-             table.attr = "style='width:50%;'",
-             caption = "Significant Genes in DRIVE")
-knitr::kable(significant.genes.table.Achilles.gene1, format = "html",
-             table.attr = "style='width:50%;'", 
-             caption = "Significant Genes in Achilles")
-
-rm(significant.genes.table.DRIVE.gene1,significant.genes.table.Achilles.gene1)
-```
-
-
-## Bayes Test
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.bayes.DRIVE.gene1 <- create_volcano_plot(test.results.gene1,"DRIVE","bayes",
                                        target.genes)
@@ -321,44 +292,26 @@ plot.bayes.Achilles.gene1 <- create_volcano_plot(test.results.gene1,"Achilles",
 
 grid.arrange(plot.bayes.DRIVE.gene1,plot.bayes.Achilles.gene1,ncol=2)
 
-rm(plot.bayes.DRIVE.gene1,plot.bayes.Achilles.gene1)
+rm(plot.bayes.DRIVE.gene1,plot.bayes.Achilles.gene1,test.results.gene1)
 ```
 
+# Comparison in `r gene2`
 
-```{r}
-significant.genes.table.DRIVE.gene1 <- create.significant.genes.table(
-  test.results.gene1,"DRIVE","bayes")
-significant.genes.table.Achilles.gene1 <- create.significant.genes.table(
-  test.results.gene1,"Achilles","bayes")
-
-knitr::kable(significant.genes.table.DRIVE.gene1, format = "html",
-             table.attr = "style='width:50%;'",
-             caption = "Significant Genes in DRIVE")
-knitr::kable(significant.genes.table.Achilles.gene1, format = "html",
-             table.attr = "style='width:50%;'", 
-             caption = "Significant Genes in Achilles")
-
-rm(significant.genes.table.DRIVE.gene1,significant.genes.table.Achilles.gene1,
-   test.results.gene1)
-```
-
-# Data Analysis `r gene2`
-We do the same for `r gene2`.
+We do the same analysis for `r gene2`.
 
 ## Mean Differences
-```{r eval=TRUE, fig.height=4, fig.width=10}
+
+```{r}
 test.results.gene2 <- calc.mean.diffs.and.p.values(dep.scores.DRIVE, 
                                            dep.scores.Achilles,
                                            class.table.gene2$DRIVE,
                                            class.table.gene2$Achilles)
 
-plots <- plot.mean.diffs(test.results.gene2)
-grid.arrange(plots$DRIVE,plots$Achilles,ncol=2)
-
-rm(class.table.gene2,plots)
+rm(class.table.gene2)
 ```
 
-## Welch Test
+## Welch's t-test
+
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.welch.DRIVE.gene2 <- create_volcano_plot(test.results.gene2,"DRIVE",
                                               "welch",target.genes,
@@ -372,24 +325,8 @@ grid.arrange(plot.welch.DRIVE.gene2,plot.welch.Achilles.gene2,ncol=2)
 rm(plot.welch.DRIVE.gene2,plot.welch.Achilles.gene2)
 ```
 
+## Wilcoxon rank-sum test
 
-```{r}
-significant.genes.table.DRIVE.gene2 <- create.significant.genes.table(
-  test.results.gene2,"DRIVE","welch")
-significant.genes.table.Achilles.gene2 <- create.significant.genes.table(
-  test.results.gene2,"Achilles","welch")
-
-knitr::kable(significant.genes.table.DRIVE.gene2, format = "html",
-             table.attr = "style='width:50%;'",
-             caption = "Significant Genes in DRIVE")
-knitr::kable(significant.genes.table.Achilles.gene2, format = "html",
-             table.attr = "style='width:50%;'", 
-             caption = "Significant Genes in Achilles")
-
-rm(significant.genes.table.DRIVE.gene2,significant.genes.table.Achilles.gene2)
-```
-
-## Wilcoxon Test
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.wilc.DRIVE.gene2 <- create_volcano_plot(test.results.gene2,"DRIVE","wilc",
                                        target.genes, show_sign_line=T)
@@ -402,25 +339,8 @@ grid.arrange(plot.wilc.DRIVE.gene2,plot.wilc.Achilles.gene2,ncol=2)
 rm(plot.wilc.DRIVE.gene2,plot.wilc.Achilles.gene2)
 ```
 
+## Bayes moderated t-test
 
-```{r}
-significant.genes.table.DRIVE.gene2 <- create.significant.genes.table(
-  test.results.gene2,"DRIVE","wilc")
-significant.genes.table.Achilles.gene2 <- create.significant.genes.table(
-  test.results.gene2,"Achilles","wilc")
-
-knitr::kable(significant.genes.table.DRIVE.gene2, format = "html",
-             table.attr = "style='width:50%;'",
-             caption = "Significant Genes in DRIVE")
-knitr::kable(significant.genes.table.Achilles.gene2, format = "html",
-             table.attr = "style='width:50%;'", 
-             caption = "Significant Genes in Achilles")
-
-rm(significant.genes.table.DRIVE.gene2,significant.genes.table.Achilles.gene2)
-```
-
-
-## Bayes Test
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.bayes.DRIVE.gene2 <- create_volcano_plot(test.results.gene2,"DRIVE","bayes",
                                        target.genes)
@@ -430,44 +350,27 @@ plot.bayes.Achilles.gene2 <- create_volcano_plot(test.results.gene2,"Achilles",
 
 grid.arrange(plot.bayes.DRIVE.gene2,plot.bayes.Achilles.gene2,ncol=2)
 
-rm(plot.bayes.DRIVE.gene2,plot.bayes.Achilles.gene2)
+rm(plot.bayes.DRIVE.gene2,plot.bayes.Achilles.gene2,test.results.gene2)
 ```
 
+# Comparison in `r gene1` and `r gene2`
 
-```{r}
-significant.genes.table.DRIVE.gene2 <- create.significant.genes.table(
-  test.results.gene2,"DRIVE","bayes")
-significant.genes.table.Achilles.gene2 <- create.significant.genes.table(
-  test.results.gene2,"Achilles","bayes")
-
-knitr::kable(significant.genes.table.DRIVE.gene2, format = "html",
-             table.attr = "style='width:50%;'",
-             caption = "Significant Genes in DRIVE")
-knitr::kable(significant.genes.table.Achilles.gene2, format = "html",
-             table.attr = "style='width:50%;'", 
-             caption = "Significant Genes in Achilles")
-
-rm(significant.genes.table.DRIVE.gene2,significant.genes.table.Achilles.gene2,
-   test.results.gene2)
-```
-
-# Data Analysis `r gene1` and `r gene2`
 We do the same for `r gene1` and `r gene2` combined.
 
 ## Mean Differences
-```{r eval=TRUE, fig.height=4, fig.width=10}
+
+```{r}
 test.results.gene12 <- calc.mean.diffs.and.p.values(dep.scores.DRIVE, 
                                            dep.scores.Achilles,
                                            class.table.comb.DRIVE,
                                            class.table.comb.Achilles)
 
-plots <- plot.mean.diffs(test.results.gene12)
-grid.arrange(plots$DRIVE,plots$Achilles,ncol=2)
-
-rm(class.table.comb.DRIVE,class.table.comb.Achilles,plots)
+rm(class.table.comb.DRIVE,class.table.comb.Achilles,dep.scores.Achilles,
+   dep.scores.DRIVE)
 ```
 
-## Welch Test
+## Welch's t-test
+
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.welch.DRIVE.gene12 <- create_volcano_plot(test.results.gene12,"DRIVE",
                                               "welch",target.genes)
@@ -480,24 +383,8 @@ grid.arrange(plot.welch.DRIVE.gene12,plot.welch.Achilles.gene12,ncol=2)
 rm(plot.welch.DRIVE.gene12,plot.welch.Achilles.gene12)
 ```
 
+## Wilcoxon rank-sum test
 
-```{r}
-significant.genes.table.DRIVE.gene12 <- create.significant.genes.table(
-  test.results.gene12,"DRIVE","welch")
-significant.genes.table.Achilles.gene12 <- create.significant.genes.table(
-  test.results.gene12,"Achilles","welch")
-
-knitr::kable(significant.genes.table.DRIVE.gene12, format = "html",
-             table.attr = "style='width:50%;'",
-             caption = "Significant Genes in DRIVE")
-knitr::kable(significant.genes.table.Achilles.gene12, format = "html",
-             table.attr = "style='width:50%;'", 
-             caption = "Significant Genes in Achilles")
-
-rm(significant.genes.table.DRIVE.gene12,significant.genes.table.Achilles.gene12)
-```
-
-## Wilcoxon Test
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.wilc.DRIVE.gene12 <- create_volcano_plot(test_results=test.results.gene12,
                                               dataset="DRIVE",
@@ -521,28 +408,11 @@ plot <- grid.arrange(plot.wilc.DRIVE.gene12,plot.wilc.Achilles.gene12,ncol=2)
 # ggsave(file=paste0(plot_path,"volcano_FUBP1_U2AF2.png"), plot=plot,
 # width=10)
 
-rm(plot.wilc.DRIVE.gene12,plot.wilc.Achilles.gene12)
+rm(plot.wilc.DRIVE.gene12,plot.wilc.Achilles.gene12,plot,plot_path)
 ```
 
+## Bayes moderated t-test
 
-```{r}
-significant.genes.table.DRIVE.gene12 <- create.significant.genes.table(
-  test.results.gene12,"DRIVE","wilc")
-significant.genes.table.Achilles.gene12 <- create.significant.genes.table(
-  test.results.gene12,"Achilles","wilc")
-
-knitr::kable(significant.genes.table.DRIVE.gene12, format = "html",
-             table.attr = "style='width:50%;'",
-             caption = "Significant Genes in DRIVE")
-knitr::kable(significant.genes.table.Achilles.gene12, format = "html",
-             table.attr = "style='width:50%;'", 
-             caption = "Significant Genes in Achilles")
-
-rm(significant.genes.table.DRIVE.gene12,significant.genes.table.Achilles.gene12)
-```
-
-
-## Bayes Test
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.bayes.DRIVE.gene12 <- create_volcano_plot(test.results.gene12,"DRIVE",
                                                "bayes",target.genes)
@@ -553,23 +423,5 @@ plot.bayes.Achilles.gene12 <- create_volcano_plot(test.results.gene12,
 
 grid.arrange(plot.bayes.DRIVE.gene12,plot.bayes.Achilles.gene12,ncol=2)
 
-rm(plot.bayes.DRIVE.gene12,plot.bayes.Achilles.gene12)
-```
-
-
-```{r}
-significant.genes.table.DRIVE.gene12 <- create.significant.genes.table(
-  test.results.gene12,"DRIVE","bayes")
-significant.genes.table.Achilles.gene12 <- create.significant.genes.table(
-  test.results.gene12,"Achilles","bayes")
-
-knitr::kable(significant.genes.table.DRIVE.gene12, format = "html",
-             table.attr = "style='width:50%;'",
-             caption = "Significant Genes in DRIVE")
-knitr::kable(significant.genes.table.Achilles.gene12, format = "html",
-             table.attr = "style='width:50%;'", 
-             caption = "Significant Genes in Achilles")
-
-rm(significant.genes.table.DRIVE.gene12,significant.genes.table.Achilles.gene12,
-   test.results.gene12)
+rm(plot.bayes.DRIVE.gene12,plot.bayes.Achilles.gene12, test.results.gene12)
 ```

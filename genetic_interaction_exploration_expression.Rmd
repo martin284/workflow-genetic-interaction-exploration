@@ -103,7 +103,6 @@ dep.scores.Achilles <- readRDS(paste0(path,"dep.scores.Achilles.rds"))
 rm(path,expression.data)
 ```
 
-We load the helper functions.
 ```{r}
 source("helper_functions/calc.mean.diffs.and.p.values.R")
 source("helper_functions/create_volcano_plot.R")
@@ -113,9 +112,8 @@ source("helper_functions/create.upset.plot.R")
 source("helper_functions/list.significant.genes.R")
 ```
 
-# Data Exploration
-## Gene expression distribution of `r classification.gene.HUGO` in each cell line
-To investigate the expression level of the chosen classification gene, we plot the distribution of expression levels in the different cell lines.
+# Gene expression distribution of `r classification.gene.HUGO`
+To investigate the expression levels of the chosen classification gene, we plot the distribution of expression levels in the different cell lines.
 ```{r}
 expression.class.gene <- as.data.frame(
   t(filter(expression.data.entrez,entrezgene_id==classification.gene))[-1,])
@@ -130,28 +128,8 @@ ggplot(expression.class.gene,aes(expr.level)) +
 rm(expression.data.entrez, classification.gene)
 ```
 
-## Intersection of cell lines in Achilles or DRIVE and CCLE
-In the workflow, we can only use cell lines that appear in both the CCLE and Achilles or DRIVE datasets. To check whether we have enough cell lines for the analysis, we determine the intersections.
-```{r}
-cell.lines.DRIVE.CCLE <- intersect(dep.scores.DRIVE$CCLE_ID,
-                                   expression.class.gene$CCLE_ID)
-cell.lines.Achilles.CCLE <- intersect(dep.scores.Achilles$CCLE_ID,
-                                      expression.class.gene$CCLE_ID)
-count.table <- as.data.frame(cbind(length(cell.lines.DRIVE.CCLE),
-                                   length(cell.lines.Achilles.CCLE)))
-colnames(count.table) <- c("DRIVE","Achilles")
-rownames(count.table) <- "CCLE"
-
-count.table %>%
-  kbl() %>%
-  kable_styling()
-
-rm(cell.lines.DRIVE.CCLE,cell.lines.Achilles.CCLE,count.table)
-```
-
-# Data Analysis
-## Classification table
-We create two samples. One sample contains the overexpressed cell lines and the other contains the underexpressed cell lines. We summarise the samples in a classification table that shows whether a cell line is overexpressed or underexpressed.
+# Classification
+We create two samples. One sample contains the overexpressed cell lines and the other contains the underexpressed cell lines. We summarise the samples in a classification table that shows whether a cell line is overexpressed or underexpressed. For illustration, we show the beginning of the classification table for the cell lines in the DRIVE dataset.
 ```{r}
 class.tables <- create.classification.table.expr(
   sample.share,expression.class.gene,dep.scores.DRIVE,dep.scores.Achilles)
@@ -164,14 +142,12 @@ rm(sample.share, expression.class.gene)
 # show tables
 class.table.DRIVE %>%
   head() %>%
-  kbl(caption = "Classification Table in DRIVE") %>%
-  kable_styling()
-class.table.Achilles %>%
-  head %>%
-  kbl(caption = "Classification Table in Achilles") %>%
+  kbl(caption = "Classification Table in DRIVE",
+      col.names = c("CCLE_ID","isHighlyExpressing")) %>%
   kable_styling()
 ```
 
+# Comparion between highly expressing and low expressing cell lines
 ## Welch's t-test
 We calculate the mean values of the dependency scores of both samples, take the difference and calculate the p-value using Welch's t-test.
 ```{r}
@@ -192,8 +168,8 @@ grid.arrange(plot.welch.DRIVE,plot.welch.Achilles,ncol=2)
 rm(plot.welch.DRIVE,plot.welch.Achilles)
 ```
 
-## Wilcoxon test
-We repeat the calculation of the p-values with the Wilcoxon test.
+## Wilcoxon ranked-sum test
+We repeat the calculation of the p-values with the Wilcoxon ranked-sum test.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.wilc.DRIVE <- create_volcano_plot(test_results = res,
                                        dataset="DRIVE",
@@ -234,7 +210,7 @@ rm(plot.bayes.DRIVE,plot.bayes.Achilles,target.genes)
 ```
 
 
-
+# Significant genes
 ## Upset plots
 To investigate whether genes have significant p-values in multiple tests and datasets, we create an upset plot. Each set contains all genes that are significant in the corresponding dataset and test method.
 ```{r fig.width=8}

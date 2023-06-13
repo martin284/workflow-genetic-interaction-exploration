@@ -219,10 +219,7 @@ rm(barcharts.comb.genes)
 
 In order to detect differences between both samples, we compare them for each gene in the datasets DRIVE and Achilles. This method was represented by [Chan et al., 2019](https://www.nature.com/articles/s41586-019-1102-x).
 
-## Mean Differences
-
 To test whether the two samples respond differently to the knockout or the knockdown of a specific gene, we calculate the mean differences between the dependency scores of both samples for each gene.
-
 ```{r}
 test.results.gene1 <- calc.mean.diffs.and.p.values(dep.scores.DRIVE, 
                                            dep.scores.Achilles,
@@ -299,8 +296,6 @@ rm(plot.bayes.DRIVE.gene1,plot.bayes.Achilles.gene1,test.results.gene1)
 
 We do the same analysis for `r gene2`.
 
-## Mean Differences
-
 ```{r}
 test.results.gene2 <- calc.mean.diffs.and.p.values(dep.scores.DRIVE, 
                                            dep.scores.Achilles,
@@ -356,8 +351,6 @@ rm(plot.bayes.DRIVE.gene2,plot.bayes.Achilles.gene2,test.results.gene2)
 # Comparison in `r gene1` and `r gene2`
 
 We do the same for `r gene1` and `r gene2` combined.
-
-## Mean Differences
 
 ```{r}
 test.results.gene12 <- calc.mean.diffs.and.p.values(dep.scores.DRIVE, 

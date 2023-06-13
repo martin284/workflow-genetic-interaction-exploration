@@ -109,6 +109,7 @@ source("helper_functions/calc.mean.diffs.and.p.values.R")
 source("helper_functions/create_volcano_plot.R")
 source("helper_functions/create.classification.table.expr.R")
 source("helper_functions/find.significant.genes.R")
+source("helper_functions/create.upset.plot.R")
 ```
 
 # Data Exploration
@@ -238,59 +239,40 @@ To investigate whether genes have significant p-values in multiple tests and dat
 ```{r fig.width=8}
 significant.genes <- find.significant.genes(res=res)
 
-# create combination matrix
-comb.mat = make_comb_mat(list_to_matrix(sign.genes),mode="intersect")
+create.upset.plot(significant.genes)
 
-# define order of sets
-set.order <- c()
-if(length(sign.genes$welch.DRIVE)>0) {
-  set.order <- append(set.order,"welch.DRIVE")}
-if(length(sign.genes$wilc.DRIVE)>0) {
-  set.order <- append(set.order,"wilc.DRIVE")}
-if(length(sign.genes$bayes.DRIVE)>0) {
-  set.order <- append(set.order,"bayes.DRIVE")}
-if(length(sign.genes$welch.Achilles)>0) {
-  set.order <- append(set.order,"welch.Achilles")}
-if(length(sign.genes$wilc.Achilles)>0) {
-  set.order <- append(set.order,"wilc.Achilles")}
-if(length(sign.genes$bayes.Achilles)>0) {
-  set.order <- append(set.order,"bayes.Achilles")}
-
-# plot
-UpSet(comb.mat,set_order=set.order)
-
-rm(threshold,res,set.order,comb.mat)
+rm(res)
 ```
 
 ## Significant genes
 We list the genes that appear in the maximum number of significant gene sets.
 ```{r}
 # create Boolean matrix for gene in sets
-sign.genes.total <- unique(unlist(sign.genes))
+sign.genes.total <- unique(unlist(significant.genes))
 genes.set.table <- as.data.frame(cbind(geneID=sign.genes.total))
 
 check.dataset <- function(gene.name,dataset) {
   return(gene.name %in% dataset)
 }
 
-if(length(sign.genes.welch.DRIVE)>0) {
+if(length(significant.genes$welch.DRIVE)>0) {
   genes.set.table$welch.DRIVE <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.welch.DRIVE)}
-if(length(sign.genes.wilc.DRIVE)>0) {
+    sapply(genes.set.table$geneID, check.dataset,significant.genes$welch.DRIVE)}
+if(length(significant.genes$wilc.DRIVE)>0) {
   genes.set.table$wilc.DRIVE <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.wilc.DRIVE)}
-if(length(sign.genes.bayes.DRIVE)>0) {
+    sapply(genes.set.table$geneID, check.dataset,significant.genes$wilc.DRIVE)}
+if(length(significant.genes$bayes.DRIVE)>0) {
   genes.set.table$bayes.DRIVE <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.bayes.DRIVE)}
-if(length(sign.genes.welch.Achilles)>0) {
+    sapply(genes.set.table$geneID, check.dataset,significant.genes$bayes.DRIVE)}
+if(length(significant.genes$welch.Achilles)>0) {
   genes.set.table$welch.Achilles <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.welch.Achilles)}
-if(length(sign.genes.wilc.Achilles)>0) {
+    sapply(genes.set.table$geneID, check.dataset,significant.genes$welch.Achilles)}
+if(length(significant.genes$wilc.Achilles)>0) {
   genes.set.table$wilc.Achilles <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.wilc.Achilles)}
-if(length(sign.genes.bayes.Achilles)>0) {
+    sapply(genes.set.table$geneID, check.dataset,significant.genes$wilc.Achilles)}
+if(length(significant.genes$bayes.Achilles)>0) {
   genes.set.table$bayes.Achilles <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.bayes.Achilles)}
+    sapply(genes.set.table$geneID, check.dataset,significant.genes$bayes.Achilles)}
 
 
 # count how often genes occur in sets

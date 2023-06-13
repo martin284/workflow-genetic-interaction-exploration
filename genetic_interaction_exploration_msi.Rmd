@@ -79,7 +79,6 @@ dep.scores.Achilles <- readRDS(paste0(path,"dep.scores.Achilles.rds"))
 rm(path)
 ```
 
-We load the helper functions.
 ```{r}
 source("helper_functions/calc.mean.diffs.and.p.values.R")
 source("helper_functions/create_volcano_plot.R")
@@ -87,9 +86,8 @@ source("helper_functions/create.classification.table.expr.R")
 ```
 
 
-# Data Analysis
-## Classification table
-We create two samples. One sample contains the MSI cell lines and the other contains the MSS cell lines. We summarize the samples in a classification table.
+# Classification
+We create two samples. One sample contains the MSI cell lines and the other contains the MSS cell lines. We summarize the samples in a classification table. For illustration, we show the beginning of the classification table for the cell lines in the DRIVE dataset.
 ```{r}
 # convert MSI status information to classification table
 class.table <- MSI.status
@@ -103,19 +101,18 @@ class.table.DRIVE <- merge(class.table,dep.scores.DRIVE['CCLE_ID'],
 class.table.Achilles <- merge(class.table,dep.scores.Achilles['CCLE_ID'],
                            by="CCLE_ID")
 
-#rm(MSI.status)
+rm(MSI.status)
 
 # show tables
 class.table.DRIVE %>%
   head() %>%
-  kbl(caption = "Classification Table in DRIVE") %>%
-  kable_styling()
-class.table.Achilles %>%
-  head %>%
-  kbl(caption = "Classification Table in Achilles") %>%
+  kbl(caption = "Classification Table in DRIVE",
+      col.names = c("CCLE_ID","MSI")) %>%
   kable_styling()
 ```
 
+
+# Comparison between MSI and MSS cell lines
 ## Welch's t-test
 We calculate the mean values of the dependency scores of both samples, take the difference and calculate the p-value using Welch's t-test.
 ```{r}
@@ -151,7 +148,7 @@ plot_path <- "C:/Users/Martin/Documents/Master/Thesis/report/plots/"
 rm(plot.welch.DRIVE,plot.welch.Achilles,plot.welch)
 ```
 
-## Wilcoxon test
+## Wilcoxon ranked-sum test
 We repeat the calculation of the p-values with the Wilcoxon test.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.wilc.DRIVE <- create_volcano_plot(test_results=res,
@@ -202,111 +199,4 @@ plot.bayes <- grid.arrange(plot.bayes.DRIVE,plot.bayes.Achilles,ncol=2)
 #        width=10)
 
 rm(plot.bayes.DRIVE,plot.bayes.Achilles,target.genes,plot.bayes)
-```
-
-
-
-## Upset plots
-To investigate whether genes have significant p-values in multiple tests and datasets, we create an upset plot. Each set contains all genes that are significant in the corresponding dataset and test method.
-```{r fig.width=8}
-# extract significant genes from res object
-threshold <- 0.05
-sign.genes.welch.DRIVE <- 
-  res$p_values_welch_DRIVE %>% filter(p_adj < threshold) %>% pull(gene)
-sign.genes.welch.Achilles <- 
-  res$p_values_welch_Achilles %>% filter(p_adj < threshold) %>% pull(gene)
-sign.genes.wilc.DRIVE <- 
-  res$p_values_wilc_DRIVE %>% filter(p_adj < threshold) %>% pull(gene)
-sign.genes.wilc.Achilles <- 
-  res$p_values_wilc_Achilles %>% filter(p_adj < threshold) %>% pull(gene)
-sign.genes.bayes.DRIVE <- 
-  res$p_values_bayes_DRIVE %>% filter(p_adj < threshold) %>% pull(gene)
-sign.genes.bayes.Achilles <- 
-  res$p_values_bayes_Achilles %>% filter(p_adj < threshold) %>% pull(gene)
-
-# collect in list
-sign.genes <- list()
-if(length(sign.genes.welch.DRIVE)>0){
-  sign.genes[[ "welch.DRIVE" ]] = sign.genes.welch.DRIVE}
-if(length(sign.genes.wilc.DRIVE)>0){
-  sign.genes[[ "wilc.DRIVE" ]] = sign.genes.wilc.DRIVE}
-if(length(sign.genes.bayes.DRIVE)>0){
-  sign.genes[[ "bayes.DRIVE" ]] = sign.genes.bayes.DRIVE}
-if(length(sign.genes.welch.Achilles)>0){
-  sign.genes[[ "welch.Achilles" ]] = sign.genes.welch.Achilles}
-if(length(sign.genes.wilc.Achilles)>0){
-  sign.genes[[ "wilc.Achilles" ]] = sign.genes.wilc.Achilles}
-if(length(sign.genes.bayes.Achilles)>0){
-  sign.genes[[ "bayes.Achilles" ]] = sign.genes.bayes.Achilles}
-
-# create combination matrix
-comb.mat = make_comb_mat(list_to_matrix(sign.genes),mode="intersect")
-
-# define order of sets
-set.order <- c()
-if(length(sign.genes$welch.DRIVE)>0) {
-  set.order <- append(set.order,"welch.DRIVE")}
-if(length(sign.genes$wilc.DRIVE)>0) {
-  set.order <- append(set.order,"wilc.DRIVE")}
-if(length(sign.genes$bayes.DRIVE)>0) {
-  set.order <- append(set.order,"bayes.DRIVE")}
-if(length(sign.genes$welch.Achilles)>0) {
-  set.order <- append(set.order,"welch.Achilles")}
-if(length(sign.genes$wilc.Achilles)>0) {
-  set.order <- append(set.order,"wilc.Achilles")}
-if(length(sign.genes$bayes.Achilles)>0) {
-  set.order <- append(set.order,"bayes.Achilles")}
-
-# plot
-UpSet(comb.mat,set_order=set.order)
-
-rm(threshold,res,set.order,comb.mat)
-```
-
-## Significant genes
-We list the genes that appear in the maximum number of significant gene sets.
-```{r}
-# create Boolean matrix for gene in sets
-sign.genes.total <- unique(unlist(sign.genes))
-genes.set.table <- as.data.frame(cbind(geneID=sign.genes.total))
-
-check.dataset <- function(gene.name,dataset) {
-  return(gene.name %in% dataset)
-}
-
-if(length(sign.genes.welch.DRIVE)>0) {
-  genes.set.table$welch.DRIVE <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.welch.DRIVE)}
-if(length(sign.genes.wilc.DRIVE)>0) {
-  genes.set.table$wilc.DRIVE <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.wilc.DRIVE)}
-if(length(sign.genes.bayes.DRIVE)>0) {
-  genes.set.table$bayes.DRIVE <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.bayes.DRIVE)}
-if(length(sign.genes.welch.Achilles)>0) {
-  genes.set.table$welch.Achilles <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.welch.Achilles)}
-if(length(sign.genes.wilc.Achilles)>0) {
-  genes.set.table$wilc.Achilles <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.wilc.Achilles)}
-if(length(sign.genes.bayes.Achilles)>0) {
-  genes.set.table$bayes.Achilles <- 
-    sapply(genes.set.table$geneID, check.dataset,sign.genes.bayes.Achilles)}
-
-
-# count how often genes occur in sets
-genes.set.table$sum <- rowSums(genes.set.table[,-1])
-
-# extract all genes that occur in maximal number of sets
-max.set <- max(genes.set.table$sum)
-final.sign.genes <- filter(genes.set.table,sum==max.set)
-
-# show result
-final.sign.genes['geneID'] %>%
-  kbl(caption = paste("Genes that are significant in",max.set,"sets.")) %>%
-  kable_styling()
-
-rm(sign.genes.welch.DRIVE,sign.genes.wilc.DRIVE,sign.genes.bayes.DRIVE,
-   sign.genes.welch.Achilles,sign.genes.wilc.Achilles,
-   sign.genes.bayes.Achilles,genes.set.table,sign.genes)
 ```

@@ -1,5 +1,5 @@
 ---
-title: "Boxplots for Expression based Genetic Dependency Detection"
+title: "Boxplots for expression-based genetic dependency interaction"
 author: "Martin Brand"
 date: "`r format(Sys.time(), '%B %e, %Y')`"
 output:
@@ -41,13 +41,14 @@ library(kableExtra)
 library(dplyr)
 ```
 
+# Classification and target gene
 ```{r}
 classification.gene.HUGO <- "PUF60"
 classification.gene.entrez <- "22827"
 target.gene <- "PUF60"
 ```
 
-# Data Preprocessing
+# Data preprocessing
 ```{r, warning=FALSE}
 path <-
   "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
@@ -81,13 +82,9 @@ expression.class.gene <- as.data.frame(expression.class.gene)
 expression.class.gene$CCLE_ID <- rownames(expression.class.gene)
 rownames(expression.class.gene) <- NULL
 colnames(expression.class.gene) <- c("expr.level","CCLE_ID")
-
-ggplot(expression.class.gene,aes(expr.level)) +
-  geom_histogram(bins = 40)
 ```
 
-# Classification Table
-The isMutated==TRUE property stands here for highly-expressing cell lines and isMutated==FALSE for low-expressing cell lines.
+# Classification
 ```{r}
 sample.share <- 0.2
 
@@ -101,14 +98,11 @@ colnames(class.table.Achilles)[2] <- "isMutated"
 
 rm(sample.share, expression.class.gene,class.tables)
 
-# show tables
+# show one table for illustration
 class.table.DRIVE %>%
   head() %>%
-  kbl(caption = "Classification Table in DRIVE") %>%
-  kable_styling()
-class.table.Achilles %>%
-  head %>%
-  kbl(caption = "Classification Table in Achilles") %>%
+  kbl(caption = "Classification Table in DRIVE",
+      col.names = c("CCLE_ID","isHighlyExpressing")) %>%
   kable_styling()
 ```
 

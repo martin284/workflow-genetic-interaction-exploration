@@ -1,5 +1,5 @@
 ---
-title: "Boxplots for Genetic Dependency Interaction"
+title: "Boxplots for genotype-based genetic dependency interaction"
 author: "Martin Brand"
 date: "`r format(Sys.time(), '%B %e, %Y')`"
 output:

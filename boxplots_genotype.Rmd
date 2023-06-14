@@ -1,5 +1,5 @@
 ---
-title: "Boxplots for Genetic Dependency Detection"
+title: "Boxplots for Genetic Dependency Interaction"
 author: "Martin Brand"
 date: "`r format(Sys.time(), '%B %e, %Y')`"
 output:
@@ -40,11 +40,13 @@ library(readxl)
 library(kableExtra)
 ```
 
+# Classification and target gene
 ```{r}
 genotype <- "BRCA1"
 target.gene <- "PARP2"
 ```
 
+# Data preprocessing
 ```{r, warning=FALSE}
 data.dir <-
   "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
@@ -69,7 +71,7 @@ source("helper_functions/create.dep.score.boxplots.R")
 source("helper_functions/create.dep.score.boxplots.MSI.R")
 ```
 
-# Classification Table
+# Classification
 ```{r, eval=TRUE}
 class.table <- create.classification.table.mut.vs.non.mut(
                                                 CCLE.mut, cancer.names,
@@ -80,11 +82,6 @@ colnames(class.table$Achilles)[2] <- "isMutated"
 colnames(class.table$DRIVE)[2] <- "isMutated"
 
 class.table$DRIVE %>%
-  head() %>%
-  kbl() %>%
-  kable_styling()
-
-class.table$Achilles %>%
   head() %>%
   kbl() %>%
   kable_styling()

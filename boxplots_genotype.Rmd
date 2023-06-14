@@ -81,6 +81,8 @@ class.table <- create.classification.table.mut.vs.non.mut(
 colnames(class.table$Achilles)[2] <- "isMutated"
 colnames(class.table$DRIVE)[2] <- "isMutated"
 
+# show one table for illustration
+
 class.table$DRIVE %>%
   head() %>%
   kbl() %>%

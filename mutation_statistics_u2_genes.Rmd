@@ -35,7 +35,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, message=FALSE}
 library(dplyr)
 library(ggplot2)
-library(readr)
 ```
 
 ```{r}
@@ -46,7 +45,7 @@ U2.genes <- c("FUBP1","SF1","U2AF1","U2AF2","SNRPB","SNRPD1","SNRPD2",
 data.dir <-
   "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
 
-dep.scores <- read_rds(file.path(data.dir, 'DepMap_18Q4_data.rds'))
+dep.scores <- readRDS(file.path(data.dir, 'DepMap_18Q4_data.rds'))
 
 dep.scores.DRIVE <- as.data.frame(dep.scores[["DRIVE"]])
 cell.lines.DRIVE <- as.data.frame(rownames(dep.scores.DRIVE))

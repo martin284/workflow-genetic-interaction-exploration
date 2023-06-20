@@ -43,9 +43,9 @@ library(dplyr)
 
 # Classification and target gene
 ```{r}
-classification.gene.HUGO <- "PUF60"
-classification.gene.entrez <- "22827"
-target.gene <- "PUF60"
+classification.gene.HUGO <- "SNRPF"
+classification.gene.entrez <- "6636"
+target.gene <- "SNRPF"
 ```
 
 # Data preprocessing
@@ -115,8 +115,8 @@ boxplot.target.gene.Achilles <-
                             genotype=classification.gene.HUGO,
                             class.table=class.table.Achilles,
                             dataset="Achilles",
-                            pos.p.value = 1.6,
-                            sample.name.1 = "-\nlow-expressing",
+                            pos.p.value = 0.7,
+                            sample.name.1 = "-\nlowly-expressing",
                             sample.name.2 = "-\nhighly-expressing",
                             show.y.label = F)
 
@@ -127,9 +127,15 @@ boxplot.target.gene.DRIVE <-
                             class.table=class.table.DRIVE,
                             dataset="DRIVE",
                             pos.p.value = 0.7,
-                            sample.name.1 = "-\nlow-expressing",
+                            sample.name.1 = "-\nlowly-expressing",
                             sample.name.2 = "-\nhighly-expressing",
                             show.y.label = T)
 
-grid.arrange(boxplot.target.gene.DRIVE,boxplot.target.gene.Achilles,ncol=2)
+plot <- grid.arrange(boxplot.target.gene.DRIVE,boxplot.target.gene.Achilles,ncol=2)
+
+# # save plot
+# plot_path <-
+# "C:/Users/Martin/Documents/Master/Thesis/report/plots/boxplots/"
+# ggsave(file=paste0(plot_path,"SNRPF_SNRPF_expr.svg"), plot=plot)
+# ggsave(file=paste0(plot_path,"SNRPF_SNRPF_expr.png"), plot=plot)
 ```

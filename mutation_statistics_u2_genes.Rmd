@@ -94,20 +94,20 @@ mut.stats.Achilles <-
 ggplot(mut.stats.DRIVE,aes(x=reorder(gene.name,-Freq),y=Freq)) +
   geom_bar(stat = "identity", fill="tomato3") +
   ylab("Number of mutated cell lines") +
-  xlab("Gene name") +
+  xlab("") +
   ggtitle("DRIVE") +
   theme(plot.title = element_text(hjust = 0.5),
         text = element_text(size = 20),
-        axis.text = element_text(size = 10))
+        axis.text = element_text(size = 20, angle = 90))
 
 ggplot(mut.stats.Achilles,aes(x=reorder(gene.name,-Freq),y=Freq)) +
   geom_bar(stat = "identity", fill="tomato3") +
   ylab("Number of mutated cell lines") +
-  xlab("Gene name") +
+  xlab("") +
   ggtitle("Achilles") +
   theme(plot.title = element_text(hjust = 0.5),
         text = element_text(size = 20),
-        axis.text = element_text(size = 10))
+        axis.text = element_text(size = 20, angle = 90))
 ```
 
 

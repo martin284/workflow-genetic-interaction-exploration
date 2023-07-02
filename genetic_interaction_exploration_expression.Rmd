@@ -1,7 +1,10 @@
 ---
-title: "Genetic Dependency Detection based on Gene Expression"
-author: "Martin Brand"
-date: "`r format(Sys.time(), '%B %e, %Y')`"
+title: "Genetic Interaction Exploration based on Gene Expression"
+author:
+- name: "Martin Brand"
+- name: "Kathi Zarnack"
+date: "2023-01-02 - 2023-06-29"
+abstract: "The workflow explores genetic interactions in cell lines with high or low expression of a selected gene. It uses an expression dataset to classify the cell lines in highly expressing and lowly expressing cell lines. Using the gene-screening datasets, it then compares the two samples to identify significant differences in gene dependencies."
 output:
   bookdown::html_document2:
     code_folding: hide
@@ -33,7 +36,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r, message=FALSE, warning=FALSE}
+```{r libraries, message=FALSE, warning=FALSE}
 Sys.setenv(LANG = "en")
 library(dplyr)
 library(ggplot2)
@@ -43,62 +46,61 @@ library(limma)
 library(ggrepel)
 library(gridExtra)
 library(ComplexHeatmap)
+library(Rgraphviz)
+library(CePa)
 ```
 
 # Classification and target genes
 First, we define the input data for the workflow: the gene we use for classification into high and low expressing cell lines, the sample share that determines how many cell lines are considered and the target genes to be displayed in the volcano plots.
 ```{r}
-# target.genes <- c("FUBP1","SF1","U2AF1","U2AF2","SNRPB","SNRPD1","SNRPD2",
-#                   "SNRPD3","SNRPE","SNRPF","SNRPG","PUF60","SMNDC1",
-#                   "DNAJC8","RBM17","CHERP","U2SURP","DHX15","DDX46")
+# choose the genes that should be labeled in the result plots
+target.genes <- c("FUBP1","SF3A1")
 
-# target.genes <- c("EIF3A","SMNDC1")
-# target.genes <- c("FUBP1","U2AF2")
-# target.genes <- c("PUF60")
-target.genes <- c("SNRPF")
-# target.genes <- c("CCND1")
+# select the gene on which to base the classification
+# you must specify the gene name and its Entrez ID
+classification.gene.HUGO <- "FUBP1"
+classification.gene <- "8880"
 
-# Entrez ID 
-classification.gene.HUGO <- "SNRPF"
-classification.gene <- "6636"
-
+# select the sample portion of the cell lines
+# e.g. 0.2 means that 20% with highest expression are tested
+# against 20% with lowest expression
 sample.share <- 0.2
 ```
 
 # Data Preprocessing
 We load the gene expression dataset ([CCLE expression dataset](https://depmap.org/portal/download/all/?releasename=mRNA+expression&filename=CCLE_Expression_Entrez_2012-09-29.gct)) and the datasets that contains the dependency scores from the projects Achilles and DRIVE ([DepMap datasets](https://figshare.com/articles/dataset/DepMap_Datasets_for_WRN_manuscript/7712756/1)).
 ```{r, eval=FALSE}
-library(CePa)
 path <- "C:/Users/Martin/Documents/Master/Thesis/CCLE_data/"
 expression.data <- 
   read.gct(
-    paste0(path,"Expression_Files/CCLE_Expression_Entrez_2012-09-29.gct"))
+    paste0(path, "Expression_Files/CCLE_Expression_Entrez_2012-09-29.gct"))
 expression.data <- as.data.frame(expression.data)
 saveRDS(expression.data,
-        file=paste0(path,"Expression_Files/expression.data.rds"))
+        file=paste0(path, "Expression_Files/expression.data.rds"))
 ```
 
 ```{r}
+# specify the path to the expression dataset
 path <- "C:/Users/Martin/Documents/Master/Thesis/CCLE_data/"
 
-# load CCLE dataset
-expression.data <- readRDS(paste0(path,"Expression_Files/expression.data.rds"))
+# load CCLE expression dataset
+expression.data <- readRDS(paste0(path, "Expression_Files/expression.data.rds"))
 
 # change rownames format
 expression.data.entrez <- expression.data
 rownames(expression.data.entrez) <- 
-  substr(rownames(expression.data),1,nchar(rownames(expression.data))-3)
+  substr(rownames(expression.data), 1, nchar(rownames(expression.data)) - 3)
 # make rownames to first column
 expression.data.entrez$entrezgene_id <- rownames(expression.data.entrez)
 rownames(expression.data.entrez) <- NULL
 expression.data.entrez <- expression.data.entrez %>%
   select(entrezgene_id, everything())
 
-# load Achilles and DRIVE
+# load Achilles and DRIVE gene-screening datasets
 path <- 
   "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
-dep.scores.DRIVE <- readRDS(paste0(path,"dep.scores.DRIVE.rds"))
-dep.scores.Achilles <- readRDS(paste0(path,"dep.scores.Achilles.rds"))
+dep.scores.DRIVE <- readRDS(paste0(path, "dep.scores.DRIVE.rds"))
+dep.scores.Achilles <- readRDS(paste0(path, "dep.scores.Achilles.rds"))
 
 rm(path,expression.data)
 ```
@@ -115,98 +117,94 @@ source("helper_functions/list.significant.genes.R")
 # Gene expression distribution of `r classification.gene.HUGO`
 To investigate the expression levels of the chosen classification gene, we plot the distribution of expression levels in the different cell lines.
 ```{r}
+# extract expression levels of selected gene
 expression.class.gene <- as.data.frame(
-  t(filter(expression.data.entrez,entrezgene_id==classification.gene))[-1,])
+  t(filter(expression.data.entrez,entrezgene_id == classification.gene))[-1, ])
 expression.class.gene$CCLE_ID <- rownames(expression.class.gene)
 rownames(expression.class.gene) <- NULL
-colnames(expression.class.gene) <- c("expr.level","CCLE_ID")
+colnames(expression.class.gene) <- c("expr.level", "CCLE_ID")
 expression.class.gene$expr.level <- as.numeric(expression.class.gene$expr.level)
 
-ggplot(expression.class.gene,aes(expr.level)) +
+# plot distribution of expression levels over cell lines
+ggplot(expression.class.gene, aes(expr.level)) +
   geom_histogram(bins = 40)
 
 rm(expression.data.entrez, classification.gene)
 ```
 
 # Classification
-We create two samples. One sample contains the overexpressed cell lines and the other contains the underexpressed cell lines. We summarise the samples in a classification table that shows whether a cell line is overexpressed or underexpressed. For illustration, we show the beginning of the classification table for the cell lines in the DRIVE dataset.
+We create two samples. One sample contains the cell lines with high expression and the other contains the cell lines with low expression of the selected gene. We summarise the samples in a classification table that shows whether a cell line is highly expressing or lowly expressing. For illustration, we show the beginning of the classification table for the cell lines in the DRIVE dataset.
 ```{r}
 class.tables <- create.classification.table.expr(
-  sample.share,expression.class.gene,dep.scores.DRIVE,dep.scores.Achilles)
+  sample.share,expression.class.gene, dep.scores.DRIVE,dep.scores.Achilles)
 
 class.table.DRIVE <- class.tables$DRIVE
 class.table.Achilles <- class.tables$Achilles
 
 rm(sample.share, expression.class.gene)
 
-# show tables
+# show one table as example
 class.table.DRIVE %>%
   head() %>%
   kbl(caption = "Classification Table in DRIVE",
-      col.names = c("CCLE_ID","isHighlyExpressing")) %>%
+      col.names = c("CCLE_ID", "isHighlyExpressing")) %>%
   kable_styling()
 ```
 
-# Comparion between highly expressing and low expressing cell lines
+# Comparion between highly expressing and lowly expressing cell lines
 ## Welch's t-test
 We calculate the mean values of the dependency scores of both samples, take the difference and calculate the p-value using Welch's t-test.
 ```{r}
-res <- calc.mean.diffs.and.p.values(dep.scores.DRIVE,dep.scores.Achilles,
-                                    class.table.DRIVE,class.table.Achilles)
+res <- calc.mean.diffs.and.p.values(dep.scores.DRIVE, dep.scores.Achilles,
+                                    class.table.DRIVE, class.table.Achilles)
 
-rm(class.table.DRIVE,class.table.Achilles,class.tables,dep.scores.DRIVE,
+rm(class.table.DRIVE, class.table.Achilles, class.tables,dep.scores.DRIVE,
    dep.scores.Achilles)
 ```
 
 ```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.welch.DRIVE <- create_volcano_plot(res,"DRIVE","welch",target.genes)
+plot.welch.DRIVE <- create_volcano_plot(res, "DRIVE", "welch", target.genes)
 
-plot.welch.Achilles <- create_volcano_plot(res,"Achilles","welch",target.genes)
+plot.welch.Achilles <- create_volcano_plot(res, "Achilles", "welch",
+                                           target.genes, show_y_label = F)
 
-grid.arrange(plot.welch.DRIVE,plot.welch.Achilles,ncol=2)
+grid.arrange(plot.welch.DRIVE, plot.welch.Achilles, ncol = 2)
 
-rm(plot.welch.DRIVE,plot.welch.Achilles)
+rm(plot.welch.DRIVE, plot.welch.Achilles)
 ```
 
 ## Wilcoxon ranked-sum test
 We repeat the calculation of the p-values with the Wilcoxon ranked-sum test.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.wilc.DRIVE <- create_volcano_plot(test_results = res,
-                                       dataset="DRIVE",
+                                       dataset = "DRIVE",
                                        test_method = "wilc",
-                                       labeled_genes=target.genes,
+                                       labeled_genes = target.genes,
                                        show_y_label = T)
 
 plot.wilc.Achilles <- create_volcano_plot(test_results = res,
-                                       dataset="Achilles",
-                                       test_method = "wilc",
-                                       labeled_genes=target.genes,
-                                       show_y_label = F)
+                                          dataset = "Achilles",
+                                          test_method = "wilc",
+                                          labeled_genes = target.genes,
+                                          show_y_label = F)
 
-plot <- grid.arrange(plot.wilc.DRIVE,plot.wilc.Achilles,ncol=2)
+grid.arrange(plot.wilc.DRIVE, plot.wilc.Achilles, ncol = 2)
 
-# save plot
-# plot_path <- 
-# "C:/Users/Martin/Documents/Master/Thesis/report/plots/U2/expression_based/"
-# ggsave(file=paste0(plot_path,"volcano_SNRPF_wilc_expr.svg"), plot=plot,
-#        width=10)
-# ggsave(file=paste0(plot_path,"volcano_SNRPF_wilc_expr.png"), plot=plot,
-# width=10)
-
-rm(plot.wilc.DRIVE,plot.wilc.Achilles)
+rm(plot.wilc.DRIVE, plot.wilc.Achilles)
 ```
 
 
 ## Bayes moderated t-test
 And finally, we calculate the p-values with the Bayes moderated t-test.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.bayes.DRIVE <- create_volcano_plot(res,"DRIVE","bayes",target.genes)
+plot.bayes.DRIVE <- create_volcano_plot(res, "DRIVE", "bayes", target.genes)
 
-plot.bayes.Achilles <- create_volcano_plot(res,"Achilles","bayes",target.genes)
+plot.bayes.Achilles <- create_volcano_plot(res, "Achilles", "bayes",
+                                           target.genes, show_y_label = F)
 
-grid.arrange(plot.bayes.DRIVE,plot.bayes.Achilles,ncol=2)
+grid.arrange(plot.bayes.DRIVE, plot.bayes.Achilles,ncol = 2)
 
-rm(plot.bayes.DRIVE,plot.bayes.Achilles,target.genes)
+rm(plot.bayes.DRIVE, plot.bayes.Achilles, target.genes)
 ```
 
 
@@ -214,7 +212,7 @@ rm(plot.bayes.DRIVE,plot.bayes.Achilles,target.genes)
 ## Upset plots
 To investigate whether genes have significant p-values in multiple tests and datasets, we create an upset plot. Each set contains all genes that are significant in the corresponding dataset and test method.
 ```{r fig.width=8}
-significant.genes <- find.significant.genes(res=res)
+significant.genes <- find.significant.genes(res = res)
 
 create.upset.plot(significant.genes)
 
@@ -229,8 +227,15 @@ final.significant.genes <- list.significant.genes(significant.genes)
 # show result
 final.significant.genes$final.significant.genes['geneID'] %>%
   kbl(caption = paste("Genes that are significant in",
-                      final.significant.genes$max.set,"sets.")) %>%
+                      final.significant.genes$max.set, "sets.")) %>%
   kable_styling()
 
-rm(significant.genes,final.significant.genes)
+rm(significant.genes, final.significant.genes)
 ```
+
+
+Here are the package versions for successful reproduction.
+```{r, session_info, include=T, echo=T, results='markup'}
+sessionInfo()
+```
+

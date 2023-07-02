@@ -50,7 +50,7 @@ library(Rgraphviz)
 library(CePa)
 ```
 
-# Classification and target genes
+# Classification settings and target genes
 First, we define the input data for the workflow: the gene we use for classification into high and low expressing cell lines, the sample share that determines how many cell lines are considered and the target genes to be displayed in the volcano plots.
 ```{r}
 # choose the genes that should be labeled in the result plots
@@ -152,8 +152,8 @@ class.table.DRIVE %>%
 ```
 
 # Comparion between highly expressing and lowly expressing cell lines
+To test whether the two samples respond differently to the knockout or the knockdown of a specific gene, we calculate the mean differences between the dependency scores of both samples for each gene. We then compare the two samples using various statistical tests.
 ## Welch's t-test
-We calculate the mean values of the dependency scores of both samples, take the difference and calculate the p-value using Welch's t-test.
 ```{r}
 res <- calc.mean.diffs.and.p.values(dep.scores.DRIVE, dep.scores.Achilles,
                                     class.table.DRIVE, class.table.Achilles)
@@ -174,7 +174,6 @@ rm(plot.welch.DRIVE, plot.welch.Achilles)
 ```
 
 ## Wilcoxon ranked-sum test
-We repeat the calculation of the p-values with the Wilcoxon ranked-sum test.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.wilc.DRIVE <- create_volcano_plot(test_results = res,
                                        dataset = "DRIVE",
@@ -195,7 +194,6 @@ rm(plot.wilc.DRIVE, plot.wilc.Achilles)
 
 
 ## Bayes moderated t-test
-And finally, we calculate the p-values with the Bayes moderated t-test.
 ```{r eval=TRUE, fig.height=4, fig.width=10}
 plot.bayes.DRIVE <- create_volcano_plot(res, "DRIVE", "bayes", target.genes)
 

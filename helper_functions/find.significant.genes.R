@@ -1,4 +1,4 @@
-find.significant.genes <- function(threshold=0.05,res) {
+find.significant.genes <- function(threshold = 0.05, res) {
   
   # extract significant genes
   sign.genes.welch.DRIVE <- 
@@ -16,17 +16,17 @@ find.significant.genes <- function(threshold=0.05,res) {
   
   # collect in list
   sign.genes <- list()
-  if(length(sign.genes.welch.DRIVE)>0){
+  if(length(sign.genes.welch.DRIVE) > 0){
     sign.genes[[ "welch.DRIVE" ]] = sign.genes.welch.DRIVE}
-  if(length(sign.genes.wilc.DRIVE)>0){
+  if(length(sign.genes.wilc.DRIVE) > 0){
     sign.genes[[ "wilc.DRIVE" ]] = sign.genes.wilc.DRIVE}
-  if(length(sign.genes.bayes.DRIVE)>0){
+  if(length(sign.genes.bayes.DRIVE) > 0){
     sign.genes[[ "bayes.DRIVE" ]] = sign.genes.bayes.DRIVE}
-  if(length(sign.genes.welch.Achilles)>0){
+  if(length(sign.genes.welch.Achilles) > 0){
     sign.genes[[ "welch.Achilles" ]] = sign.genes.welch.Achilles}
-  if(length(sign.genes.wilc.Achilles)>0){
+  if(length(sign.genes.wilc.Achilles) > 0){
     sign.genes[[ "wilc.Achilles" ]] = sign.genes.wilc.Achilles}
-  if(length(sign.genes.bayes.Achilles)>0){
+  if(length(sign.genes.bayes.Achilles) > 0){
     sign.genes[[ "bayes.Achilles" ]] = sign.genes.bayes.Achilles}
   
   return(sign.genes)

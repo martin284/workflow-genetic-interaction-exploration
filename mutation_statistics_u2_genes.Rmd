@@ -1,7 +1,10 @@
 ---
-title: "Mutation statistics in U2 genes"
-author: "Martin Brand"
-date: "`r format(Sys.time(), '%B %e, %Y')`"
+title: "Mutation statistics for U2-related genes"
+author:
+- name: "Martin Brand"
+- name: "Kathi Zarnack"
+date: "2023-01-02 - 2023-06-29"
+abstract: "In order to find genes with sufficient sample sizes for the genotype-based workflow, we visualize the the number of mutated cell lines for a given gene set."
 output:
   bookdown::html_document2:
     code_folding: hide
@@ -32,19 +35,27 @@ fontsize: 18pt
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, message=FALSE}
+```{r libraries, message=FALSE}
 library(dplyr)
 library(ggplot2)
 ```
 
+# Data preprocessing and gene selection
 ```{r}
-U2.genes <- c("FUBP1","SF1","U2AF1","U2AF2","SNRPB","SNRPD1","SNRPD2",
-              "SNRPD3","SNRPE","SNRPF","SNRPG","PUF60","SMNDC1",
-              "DNAJC8","RBM17","CHERP","U2SURP","DHX15","DDX46")
+# U2-interacting proteins and Sm proteins
+# U2.genes <- c("FUBP1","SF1","U2AF1","U2AF2","SNRPB","SNRPD1","SNRPD2",
+#               "SNRPD3","SNRPE","SNRPF","SNRPG","PUF60","SMNDC1",
+#               "DNAJC8","RBM17","CHERP","U2SURP","DHX15","DDX46")
 
+# U2-specific core proteins
+U2.genes <- c("SNRPA1","SNRPB2","SF3A1","SF3A2","SF3A3","SF3B1","SF3B2",
+              "SF3B3","SF3B4","PHF5A","SF3B5","SF3B6")
+
+# specify path to the gene-screening datasets
 data.dir <-
   "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
 
+# load and preprocess gene-screening datasets
 dep.scores <- readRDS(file.path(data.dir, 'DepMap_18Q4_data.rds'))
 
 dep.scores.DRIVE <- as.data.frame(dep.scores[["DRIVE"]])
@@ -54,45 +65,59 @@ dep.scores.Achilles <- as.data.frame(dep.scores[["CRISPR"]])
 cell.lines.Achilles <- as.data.frame(rownames(dep.scores.Achilles))
 colnames(cell.lines.Achilles) <- "CCLE_ID"
 
-CCLE.mut <- readRDS(paste0(data.dir,"CCLE.mut.rds"))
-CCLE.mut <- CCLE.mut[CCLE.mut$Variant_Classification!="Silent",]
+# load processed CCLE mutation dataset
+CCLE.mut <- readRDS(paste0(data.dir, "CCLE.mut.rds"))
+CCLE.mut <- CCLE.mut[CCLE.mut$Variant_Classification != "Silent", ]
 
+# load file containing DepMap and CCLE cell line IDs
 cancer.names <- read.csv(paste0(data.dir, "DepMap-2018q3-celllines.csv"))
-cancer.names <- cancer.names[,c(1,2)]
-colnames(cancer.names) <- c("DepMap_ID","CCLE_ID")
+cancer.names <- cancer.names[ , c(1, 2)]
+colnames(cancer.names) <- c("DepMap_ID", "CCLE_ID")
 
-CCLE.mut <- merge(CCLE.mut,cancer.names,by="DepMap_ID")
+# replace DepMap ID by CCLE ID in CCLE mutation dataset
+CCLE.mut <- merge(CCLE.mut, cancer.names, by = "DepMap_ID")
 CCLE.mut$DepMap_ID <- NULL
 CCLE.mut <- CCLE.mut %>% select("CCLE_ID", everything())
 
-CCLE.mut.DRIVE <- merge(CCLE.mut,cell.lines.DRIVE,by="CCLE_ID")
-CCLE.mut.Achilles <- merge(CCLE.mut,cell.lines.Achilles,by="CCLE_ID")
+# keep only cell lines that appear in gene-screening dataset and CCLE dataset
+CCLE.mut.DRIVE <- merge(CCLE.mut, cell.lines.DRIVE, by = "CCLE_ID")
+CCLE.mut.Achilles <- merge(CCLE.mut, cell.lines.Achilles, by = "CCLE_ID")
 ```
 
+# Mutation statistics
 ```{r}
-CCLE.mut.U2.DRIVE <- CCLE.mut.DRIVE[CCLE.mut.DRIVE$Hugo_Symbol %in% U2.genes,]
+# extract mutations of selected genes
+CCLE.mut.U2.DRIVE <- CCLE.mut.DRIVE[CCLE.mut.DRIVE$Hugo_Symbol %in% U2.genes, ]
+
+# remove mutations with less harmless mutation in genes with multiple mutations
 CCLE.mut.U2.DRIVE <- CCLE.mut.U2.DRIVE[order(
-  CCLE.mut.U2.DRIVE$isDeleterious,decreasing=T),]
-CCLE.mut.U2.DRIVE <- CCLE.mut.U2.DRIVE[!duplicated(CCLE.mut.U2.DRIVE[c(1,2)]),]
+  CCLE.mut.U2.DRIVE$isDeleterious, decreasing = T), ]
+CCLE.mut.U2.DRIVE <- 
+  CCLE.mut.U2.DRIVE[!duplicated(CCLE.mut.U2.DRIVE[c(1, 2)]), ]
+
+# count mutations per gene and order them
 mut.stats.DRIVE <- as.data.frame(table(CCLE.mut.U2.DRIVE$Hugo_Symbol))
 colnames(mut.stats.DRIVE)[1] <- "gene.name"
-mut.stats.DRIVE <- mut.stats.DRIVE[order(mut.stats.DRIVE$Freq,decreasing = T),]
+mut.stats.DRIVE <- 
+  mut.stats.DRIVE[order(mut.stats.DRIVE$Freq, decreasing = T), ]
 
+# repeat for Achilles
 CCLE.mut.U2.Achilles <- 
   CCLE.mut.Achilles[CCLE.mut.Achilles$Hugo_Symbol %in% U2.genes,]
 CCLE.mut.U2.Achilles <- 
-  CCLE.mut.U2.Achilles[order(CCLE.mut.U2.Achilles$isDeleterious,decreasing=T),]
+  CCLE.mut.U2.Achilles[order(CCLE.mut.U2.Achilles$isDeleterious, 
+                             decreasing = T), ]
 CCLE.mut.U2.Achilles <- 
-  CCLE.mut.U2.Achilles[!duplicated(CCLE.mut.U2.Achilles[c(1,2)]),]
+  CCLE.mut.U2.Achilles[!duplicated(CCLE.mut.U2.Achilles[c(1, 2)]), ]
 mut.stats.Achilles <- as.data.frame(table(CCLE.mut.U2.Achilles$Hugo_Symbol))
 colnames(mut.stats.Achilles)[1] <- "gene.name"
 mut.stats.Achilles <- 
-  mut.stats.Achilles[order(mut.stats.Achilles$Freq,decreasing = T),]
+  mut.stats.Achilles[order(mut.stats.Achilles$Freq, decreasing = T), ]
 ```
 
-```{r fig.width=14}
-ggplot(mut.stats.DRIVE,aes(x=reorder(gene.name,-Freq),y=Freq)) +
-  geom_bar(stat = "identity", fill="tomato3") +
+```{r}
+ggplot(mut.stats.DRIVE, aes(x = reorder(gene.name, -Freq), y = Freq)) +
+  geom_bar(stat = "identity", fill = "tomato3") +
   ylab("Number of mutated cell lines") +
   xlab("") +
   ggtitle("DRIVE") +
@@ -100,14 +125,19 @@ ggplot(mut.stats.DRIVE,aes(x=reorder(gene.name,-Freq),y=Freq)) +
         text = element_text(size = 20),
         axis.text = element_text(size = 20, angle = 90))
 
-ggplot(mut.stats.Achilles,aes(x=reorder(gene.name,-Freq),y=Freq)) +
-  geom_bar(stat = "identity", fill="tomato3") +
+ggplot(mut.stats.Achilles, aes(x = reorder(gene.name, -Freq), y = Freq)) +
+  geom_bar(stat = "identity", fill = "tomato3") +
   ylab("Number of mutated cell lines") +
   xlab("") +
   ggtitle("Achilles") +
   theme(plot.title = element_text(hjust = 0.5),
         text = element_text(size = 20),
         axis.text = element_text(size = 20, angle = 90))
+```
+
+Here are the package versions for successful reproduction.
+```{r, session_info, include=T, echo=T, results='markup'}
+sessionInfo()
 ```
 
 

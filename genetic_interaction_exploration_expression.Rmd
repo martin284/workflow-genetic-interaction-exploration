@@ -136,7 +136,10 @@ rm(expression.data.entrez, classification.gene)
 We create two samples. One sample contains the cell lines with high expression and the other contains the cell lines with low expression of the selected gene. We summarise the samples in a classification table that shows whether a cell line is highly expressing or lowly expressing. For illustration, we show the beginning of the classification table for the cell lines in the DRIVE dataset.
 ```{r}
 class.tables <- create.classification.table.expr(
-  sample.share,expression.class.gene, dep.scores.DRIVE,dep.scores.Achilles)
+  sample.share = sample.share,
+  expression.class.gene = expression.class.gene, 
+  dep.scores.DRIVE = dep.scores.DRIVE,
+  dep.scores.Achilles = dep.scores.Achilles)
 
 class.table.DRIVE <- class.tables$DRIVE
 class.table.Achilles <- class.tables$Achilles
@@ -155,18 +158,29 @@ class.table.DRIVE %>%
 To test whether the two samples respond differently to the knockout or the knockdown of a specific gene, we calculate the mean differences between the dependency scores of both samples for each gene. We then compare the two samples using various statistical tests.
 ## Welch's t-test
 ```{r}
-res <- calc.mean.diffs.and.p.values(dep.scores.DRIVE, dep.scores.Achilles,
-                                    class.table.DRIVE, class.table.Achilles)
+res <- calc.mean.diffs.and.p.values(
+  dep_scores_DRIVE = dep.scores.DRIVE, 
+  dep_scores_Achilles = dep.scores.Achilles,
+  CCLE_mut_DRIVE = class.table.DRIVE,
+  CCLE_mut_Achilles = class.table.Achilles)
 
 rm(class.table.DRIVE, class.table.Achilles, class.tables,dep.scores.DRIVE,
    dep.scores.Achilles)
 ```
 
 ```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.welch.DRIVE <- create_volcano_plot(res, "DRIVE", "welch", target.genes)
+plot.welch.DRIVE <- create_volcano_plot(
+  test_results = res,
+  dataset = "DRIVE",
+  test_method = "welch",
+  labeled_genes = target.genes)
 
-plot.welch.Achilles <- create_volcano_plot(res, "Achilles", "welch",
-                                           target.genes, show_y_label = F)
+plot.welch.Achilles <- create_volcano_plot(
+  test_results = res,
+  dataset = "Achilles",
+  test_method = "welch",
+  labeled_genes =  target.genes,
+  show_y_label = F)
 
 grid.arrange(plot.welch.DRIVE, plot.welch.Achilles, ncol = 2)
 
@@ -175,17 +189,18 @@ rm(plot.welch.DRIVE, plot.welch.Achilles)
 
 ## Wilcoxon ranked-sum test
 ```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.wilc.DRIVE <- create_volcano_plot(test_results = res,
-                                       dataset = "DRIVE",
-                                       test_method = "wilc",
-                                       labeled_genes = target.genes,
-                                       show_y_label = T)
+plot.wilc.DRIVE <- create_volcano_plot(
+  test_results = res,
+  dataset = "DRIVE",
+  test_method = "wilc",
+  labeled_genes = target.genes)
 
-plot.wilc.Achilles <- create_volcano_plot(test_results = res,
-                                          dataset = "Achilles",
-                                          test_method = "wilc",
-                                          labeled_genes = target.genes,
-                                          show_y_label = F)
+plot.wilc.Achilles <- create_volcano_plot(
+  test_results = res,
+  dataset = "Achilles",
+  test_method = "wilc",
+  labeled_genes = target.genes,
+  show_y_label = F)
 
 grid.arrange(plot.wilc.DRIVE, plot.wilc.Achilles, ncol = 2)
 
@@ -195,12 +210,20 @@ rm(plot.wilc.DRIVE, plot.wilc.Achilles)
 
 ## Bayes moderated t-test
 ```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.bayes.DRIVE <- create_volcano_plot(res, "DRIVE", "bayes", target.genes)
+plot.bayes.DRIVE <- create_volcano_plot(
+  test_results = res,
+  dataset = "DRIVE",
+  test_method = "bayes",
+  labeled_genes = target.genes)
 
-plot.bayes.Achilles <- create_volcano_plot(res, "Achilles", "bayes",
-                                           target.genes, show_y_label = F)
+plot.bayes.Achilles <- create_volcano_plot(
+  test_results = res,
+  dataset = "Achilles",
+  test_method = "bayes",
+  labeled_genes = target.genes,
+  show_y_label = F)
 
-grid.arrange(plot.bayes.DRIVE, plot.bayes.Achilles,ncol = 2)
+grid.arrange(plot.bayes.DRIVE, plot.bayes.Achilles, ncol = 2)
 
 rm(plot.bayes.DRIVE, plot.bayes.Achilles, target.genes)
 ```

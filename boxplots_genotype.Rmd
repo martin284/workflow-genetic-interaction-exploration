@@ -1,7 +1,10 @@
 ---
-title: "Boxplots for genotype-based genetic dependency interaction"
-author: "Martin Brand"
-date: "`r format(Sys.time(), '%B %e, %Y')`"
+title: "Boxplots for genotype-based genetic interaction exploration"
+author:
+- name: "Martin Brand"
+- name: "Kathi Zarnack"
+date: "2023-01-02 - 2023-06-29"
+abstract: "As an extension to the workflow, we visualize the dependency scores directly for a selected gene. Below we show the dependency scores for WRN for microsatellite instable and microsatellite instable cell lines as a reference."
 output:
   bookdown::html_document2:
     code_folding: hide
@@ -32,7 +35,7 @@ fontsize: 18pt
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, message=FALSE}
+```{r libraries, message=FALSE}
 library(ggplot2)
 library(gridExtra)
 library(ggpubr)
@@ -40,27 +43,32 @@ library(readxl)
 library(kableExtra)
 ```
 
-# Classification and target gene
+# Classification settings and target gene
 ```{r}
-genotype <- "BRCA1"
-target.gene <- "PARP2"
+genotype <- "TP53"
+target.gene <- "MDM2"
 ```
 
 # Data preprocessing
 ```{r, warning=FALSE}
+# specify the path to the processed gene-screening datasets, CCLE mutation
+# dataset, file with DepMap and CCLE IDs, and MSI status dataset
 data.dir <-
   "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
-cancer.names <- readRDS(paste0(data.dir,"cancer.names.rds"))
-CCLE.mut <- readRDS(paste0(data.dir,"CCLE.mut.rds"))
-dep.scores.DRIVE <- readRDS(paste0(data.dir,"dep.scores.DRIVE.rds"))
-dep.scores.Achilles <- readRDS(paste0(data.dir,"dep.scores.Achilles.rds"))
+cancer.names <- readRDS(paste0(data.dir, "cancer.names.rds"))
+CCLE.mut <- readRDS(paste0(data.dir, "CCLE.mut.rds"))
+dep.scores.DRIVE <- readRDS(paste0(data.dir, "dep.scores.DRIVE.rds"))
+dep.scores.Achilles <- readRDS(paste0(data.dir, "dep.scores.Achilles.rds"))
 
 class.table.MSI <- read_excel(paste0(data.dir, "supplementary_table.xlsx"))
-# keep only imporant cols
+
+# keep only important columns
 class.table.MSI <- class.table.MSI[,c(1,4)]
+
 # remove NAs
 class.table.MSI[class.table.MSI=="NA"] <- NA
 class.table.MSI <- na.omit(class.table.MSI)
+
 # remove rows which are classified as intermediate
 class.table.MSI <- class.table.MSI[class.table.MSI$CCLE_MSI!="indeterminate",]
 
@@ -72,94 +80,65 @@ source("helper_functions/create.dep.score.boxplots.MSI.R")
 ```
 
 # Classification
-```{r, eval=TRUE}
+```{r}
 class.table <- create.classification.table.mut.vs.non.mut(
-                                                CCLE.mut, cancer.names,
-                                                genotype, dep.scores.DRIVE,
-                                                dep.scores.Achilles)
+  CCLE_mut = CCLE.mut,
+  cancer_names = cancer.names,
+  gene_ID = genotype, 
+  DRIVE = dep.scores.DRIVE,
+  Achilles = dep.scores.Achilles)
 
 colnames(class.table$Achilles)[2] <- "isMutated"
 colnames(class.table$DRIVE)[2] <- "isMutated"
 
 # show one table for illustration
-
 class.table$DRIVE %>%
   head() %>%
   kbl() %>%
   kable_styling()
 ```
-
-```{r,eval=FALSE}
-gene1 <- "BRCA1"
-gene2 <- "BRCA2"
-
-class.table.gene1 <- create.classification.table.mut.vs.non.mut(
-                                                CCLE.mut, cancer.names,
-                                                gene1, dep.scores.DRIVE,
-                                                dep.scores.Achilles)
-class.table.gene2 <- create.classification.table.mut.vs.non.mut(
-                                                CCLE.mut, cancer.names,
-                                                gene2, dep.scores.DRIVE,
-                                                dep.scores.Achilles)
-
-source("helper_functions/merge.class.tables.R")
-
-# merge tables
-class.table.comb.DRIVE <- merge.class.tables(class.table.gene1$DRIVE,
-                                             class.table.gene2$DRIVE)
-
-class.table.comb.Achilles <- merge.class.tables(class.table.gene1$Achilles,
-                                             class.table.gene2$Achilles)
-
-class.table <- list(Achilles=class.table.comb.Achilles,
-                    DRIVE=class.table.comb.DRIVE)
-
-colnames(class.table$Achilles)[2] <- "isMutated"
-colnames(class.table$DRIVE)[2] <- "isMutated"
-
-class.table$DRIVE %>%
-  head() %>%
-  kbl() %>%
-  kable_styling()
-
-class.table$Achilles %>%
-  head() %>%
-  kbl() %>%
-  kable_styling()
-```
-
 
 # Do the distributions of both samples differ?
 ```{r}
 boxplot.target.gene.Achilles <- 
-  create.dep.score.boxplots(dep.scores=dep.scores.Achilles,
-                            target.gene=target.gene,
-                            genotype=genotype,
-                            class.table=class.table$Achilles,
-                            dataset="Achilles",
-                            show.y.label = F)
+  create.dep.score.boxplots(
+    dep.scores = dep.scores.Achilles,
+    target.gene = target.gene,
+    genotype = genotype,
+    class.table = class.table$Achilles,
+    dataset = "Achilles",
+    show.y.label = F)
 
 boxplot.target.gene.DRIVE <- 
-  create.dep.score.boxplots(dep.scores=dep.scores.DRIVE,
-                            target.gene=target.gene,
-                            genotype=genotype,
-                            class.table=class.table$DRIVE,
-                            dataset="DRIVE",
-                            show.y.label = T)
+  create.dep.score.boxplots(
+    dep.scores = dep.scores.DRIVE,
+    target.gene=target.gene,
+    genotype = genotype,
+    class.table = class.table$DRIVE,
+    dataset = "DRIVE")
 
-grid.arrange(boxplot.target.gene.DRIVE,boxplot.target.gene.Achilles,ncol=2)
+grid.arrange(boxplot.target.gene.DRIVE, boxplot.target.gene.Achilles, ncol = 2)
 ```
 
 # Comparison to MSI/MSS against WRN
 ```{r}
-boxplot.target.gene.Achilles.MSI <- 
-  create.dep.score.boxplots.MSI(dep.scores.Achilles,"WRN",
-                            class.table.MSI,"Achilles",
-                            show.y.label=F)
+boxplot.target.gene.Achilles.MSI <- create.dep.score.boxplots.MSI(
+  dep.scores = dep.scores.Achilles,
+  target.gene = "WRN",
+  class.table = class.table.MSI,
+  dataset = "Achilles",
+  show.y.label = F)
 
-boxplot.target.gene.DRIVE.MSI <- 
-  create.dep.score.boxplots.MSI(dep.scores.DRIVE,"WRN",
-                            class.table.MSI,"DRIVE")
+boxplot.target.gene.DRIVE.MSI <- create.dep.score.boxplots.MSI(
+  dep.scores = dep.scores.DRIVE,
+  target.gene = "WRN",
+  class.table = class.table.MSI,
+  dataset = "DRIVE")
 
-grid.arrange(boxplot.target.gene.DRIVE.MSI,boxplot.target.gene.Achilles.MSI,ncol=2)
+grid.arrange(boxplot.target.gene.DRIVE.MSI, boxplot.target.gene.Achilles.MSI,
+             ncol = 2)
+```
+Here are the package versions for successful reproduction.
+```{r, session_info, include=T, echo=T, results='markup'}
+sessionInfo()
 ```

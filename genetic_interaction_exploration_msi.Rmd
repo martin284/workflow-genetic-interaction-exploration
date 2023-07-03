@@ -1,7 +1,10 @@
 ---
-title: "Genetic dependency interaction in MSI cells"
-author: "Martin Brand"
-date: "`r format(Sys.time(), '%B %e, %Y')`"
+title: "Genetic Interaction Exploration based on MSI status"
+author:
+- name: "Martin Brand"
+- name: "Kathi Zarnack"
+date: "2023-01-02 - 2023-06-29"
+abstract: "The workflow explores genetic interactions in cell lines with microsatellite instability. It uses MSI status data provided by Chan et al. Using the gene-screening datasets, it then compares the two samples to identify significant differences in gene dependencies."
 output:
   bookdown::html_document2:
     code_folding: hide
@@ -32,8 +35,7 @@ fontsize: 18pt
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-We import the libraries.
-```{r, message=FALSE, warning=FALSE}
+```{r libraries, message=FALSE, warning=FALSE}
 Sys.setenv(LANG = "en")
 library(dplyr)
 library(ggplot2)
@@ -52,23 +54,14 @@ First, we define the target genes to be displayed in the volcano plots.
 target.genes <- c("WRN")
 ```
 
-# Data Preprocessing
+# Data preprocessing
 We load the MSI status dataset ([CCLE MSI status dataset](https://www.nature.com/articles/s41586-019-1102-x#Sec32)) provided by Chan et al. (2019) and the datasets that contains the dependency scores from the projects Achilles and DRIVE ([DepMap datasets](https://figshare.com/articles/dataset/DepMap_Datasets_for_WRN_manuscript/7712756/1)).
-```{r, eval=FALSE}
-library(CePa)
-path <- "C:/Users/Martin/Documents/Master/Thesis/CCLE_data/"
-expression.data <- 
-  read.gct(
-    paste0(path,"Expression_Files/CCLE_Expression_Entrez_2012-09-29.gct"))
-expression.data <- as.data.frame(expression.data)
-saveRDS(expression.data,
-        file=paste0(path,"Expression_Files/expression.data.rds"))
-```
-
 ```{r, warning=FALSE}
+# specify the path to the MSI status dataset and to the gene-screening datasets
 path <- 
   "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
 
+# load MSI status dataset
 MSI.status <- read_excel(paste0(path, "supplementary_table.xlsx"))
 MSI.status <- MSI.status[,c(1,4)]
 
@@ -82,7 +75,6 @@ rm(path)
 ```{r}
 source("helper_functions/calc.mean.diffs.and.p.values.R")
 source("helper_functions/create_volcano_plot.R")
-source("helper_functions/create.classification.table.expr.R")
 ```
 
 
@@ -92,18 +84,20 @@ We create two samples. One sample contains the MSI cell lines and the other cont
 # convert MSI status information to classification table
 class.table <- MSI.status
 class.table <- class.table %>% mutate(
-  isDeleterious = case_when(CCLE_MSI == "MSI" ~ T,CCLE_MSI == "MSS" ~ F))
+  isDeleterious = case_when(CCLE_MSI == "MSI" ~ T, CCLE_MSI == "MSS" ~ F))
 class.table$CCLE_MSI <- NULL 
 class.table <- na.omit(class.table)
 
-class.table.DRIVE <- merge(class.table,dep.scores.DRIVE['CCLE_ID'],
+# keep only cell lines that appear in the gene-screening dataset and
+# the MSI status dataset
+class.table.DRIVE <- merge(class.table, dep.scores.DRIVE['CCLE_ID'],
                            by="CCLE_ID")
-class.table.Achilles <- merge(class.table,dep.scores.Achilles['CCLE_ID'],
+class.table.Achilles <- merge(class.table, dep.scores.Achilles['CCLE_ID'],
                            by="CCLE_ID")
 
 rm(MSI.status)
 
-# show tables
+# show a table as an example
 class.table.DRIVE %>%
   head() %>%
   kbl(caption = "Classification Table in DRIVE",
@@ -113,90 +107,75 @@ class.table.DRIVE %>%
 
 
 # Comparison between MSI and MSS cell lines
-## Welch's t-test
-We calculate the mean values of the dependency scores of both samples, take the difference and calculate the p-value using Welch's t-test.
-```{r}
-res <- calc.mean.diffs.and.p.values(dep.scores.DRIVE,dep.scores.Achilles,
-                                    class.table.DRIVE,class.table.Achilles)
+We calculate the mean values of the dependency scores of both samples, take the difference and calculate the p-value using different statistical tests.
 
-rm(class.table.DRIVE,class.table.Achilles,class.table,dep.scores.DRIVE,
+## Welch's t-test
+```{r}
+res <- calc.mean.diffs.and.p.values(
+  dep_scores_DRIVE = dep.scores.DRIVE,
+  dep_scores_Achilles = dep.scores.Achilles,
+  CCLE_mut_DRIVE = class.table.DRIVE,
+  CCLE_mut_Achilles = class.table.Achilles)
+
+rm(class.table.DRIVE, class.table.Achilles, class.table, dep.scores.DRIVE,
    dep.scores.Achilles)
 ```
 
-```{r eval=TRUE, fig.height=4, fig.width=10, message=F}
-plot.welch.DRIVE <- create_volcano_plot(test_results=res,
-                                        dataset="DRIVE",
-                                        test_method="welch",
-                                        labeled_genes=target.genes,
-                                        show_y_label=TRUE)
+```{r, fig.height=4, fig.width=10, message=F}
+plot.welch.DRIVE <- create_volcano_plot(test_results = res,
+                                        dataset = "DRIVE",
+                                        test_method = "welch",
+                                        labeled_genes = target.genes)
 
 plot.welch.Achilles <- create_volcano_plot(test_results=res,
-                                        dataset="Achilles",
-                                        test_method="welch",
-                                        labeled_genes=target.genes,
-                                        show_y_label=FALSE)
+                                        dataset = "Achilles",
+                                        test_method = "welch",
+                                        labeled_genes = target.genes,
+                                        show_y_label = F)
 
-plot.welch <- grid.arrange(plot.welch.DRIVE,plot.welch.Achilles,ncol=2)
+grid.arrange(plot.welch.DRIVE, plot.welch.Achilles, ncol = 2)
 
-# save plot
-plot_path <- "C:/Users/Martin/Documents/Master/Thesis/report/plots/"
-# ggsave(file=paste0(plot_path,"volcano_MSI_welch.svg"), plot=plot.welch,
-#        width=10)
-# ggsave(file=paste0(plot_path,"volcano_MSI_welch.png"), plot=plot.welch,
-# width=10)
-
-rm(plot.welch.DRIVE,plot.welch.Achilles,plot.welch)
+rm(plot.welch.DRIVE, plot.welch.Achilles)
 ```
 
 ## Wilcoxon ranked-sum test
-We repeat the calculation of the p-values with the Wilcoxon test.
-```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.wilc.DRIVE <- create_volcano_plot(test_results=res,
-                                       dataset="DRIVE",
-                                       test_method="wilc",
-                                       labeled_genes=target.genes,
-                                       show_y_label=TRUE)
+```{r, fig.height=4, fig.width=10}
+plot.wilc.DRIVE <- create_volcano_plot(test_results = res,
+                                       dataset = "DRIVE",
+                                       test_method = "wilc",
+                                       labeled_genes = target.genes)
 
-plot.wilc.Achilles <- create_volcano_plot(test_results=res,
-                                       dataset="Achilles",
-                                       test_method="wilc",
-                                       labeled_genes=target.genes,
-                                       show_y_label=FALSE)
+plot.wilc.Achilles <- create_volcano_plot(test_results = res,
+                                       dataset = "Achilles",
+                                       test_method = "wilc",
+                                       labeled_genes = target.genes,
+                                       show_y_label = F)
 
-plot.wilc <- grid.arrange(plot.wilc.DRIVE,plot.wilc.Achilles,ncol=2)
+grid.arrange(plot.wilc.DRIVE, plot.wilc.Achilles, ncol = 2)
 
-# save plot
-# ggsave(file=paste0(plot_path,"volcano_MSI_wilc.svg"), plot=plot.wilc,
-#        width=10)
-# ggsave(file=paste0(plot_path,"volcano_MSI_wilc.png"), plot=plot.wilc,
-#        width=10)
-
-rm(plot.wilc.DRIVE,plot.wilc.Achilles,plot.wilc)
+rm(plot.wilc.DRIVE, plot.wilc.Achilles)
 ```
 
 
 ## Bayes moderated t-test
-And finally, we calculate the p-values with the Bayes moderated t-test.
-```{r eval=TRUE, fig.height=4, fig.width=10}
-plot.bayes.DRIVE <- create_volcano_plot(test_results=res,
-                                       dataset="DRIVE",
-                                       test_method="bayes",
-                                       labeled_genes=target.genes,
-                                       show_y_label=TRUE)
+```{r, fig.height=4, fig.width=10}
+plot.bayes.DRIVE <- create_volcano_plot(test_results = res,
+                                       dataset = "DRIVE",
+                                       test_method = "bayes",
+                                       labeled_genes = target.genes)
 
-plot.bayes.Achilles <- create_volcano_plot(test_results=res,
-                                       dataset="Achilles",
-                                       test_method="bayes",
-                                       labeled_genes=target.genes,
-                                       show_y_label=FALSE)
+plot.bayes.Achilles <- create_volcano_plot(test_results = res,
+                                       dataset = "Achilles",
+                                       test_method = "bayes",
+                                       labeled_genes = target.genes,
+                                       show_y_label = F)
 
-plot.bayes <- grid.arrange(plot.bayes.DRIVE,plot.bayes.Achilles,ncol=2)
+grid.arrange(plot.bayes.DRIVE, plot.bayes.Achilles, ncol = 2)
 
-# save plot
-# ggsave(file=paste0(plot_path,"volcano_MSI_bayes.svg"), plot=plot.bayes,
-#        width=10)
-# ggsave(file=paste0(plot_path,"volcano_MSI_bayes.png"), plot=plot.bayes,
-#        width=10)
+rm(plot.bayes.DRIVE, plot.bayes.Achilles, target.genes)
+```
 
-rm(plot.bayes.DRIVE,plot.bayes.Achilles,target.genes,plot.bayes)
+Here are the package versions for successful reproduction.
+```{r, session_info, include=T, echo=T, results='markup'}
+sessionInfo()
 ```

@@ -1,7 +1,10 @@
 ---
-title: "Boxplots for expression-based genetic dependency interaction"
-author: "Martin Brand"
-date: "`r format(Sys.time(), '%B %e, %Y')`"
+title: "Boxplots for expression-based genetic interaction exploration"
+author:
+- name: "Martin Brand"
+- name: "Kathi Zarnack"
+date: "2023-01-02 - 2023-06-29"
+abstract: "As an extension to the workflow, we visualize the dependency scores directly for a selected gene."
 output:
   bookdown::html_document2:
     code_folding: hide
@@ -32,7 +35,7 @@ fontsize: 18pt
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, message=FALSE}
+```{r libraries, message=FALSE}
 library(ggplot2)
 library(gridExtra)
 library(ggpubr)
@@ -41,28 +44,41 @@ library(kableExtra)
 library(dplyr)
 ```
 
-# Classification and target gene
+# Classification settings and target gene
 ```{r}
-classification.gene.HUGO <- "SNRPF"
-classification.gene.entrez <- "6636"
-target.gene <- "SNRPF"
+# select the gene on which to base the classification
+# you must specify the gene name and its Entrez ID
+classification.gene.HUGO <- "FUBP1"
+classification.gene.entrez <- "8880"
+
+# select the sample portion of the cell lines
+# e.g. 0.2 means that 20% with highest expression are tested
+# against 20% with lowest expression
+sample.share <- 0.2
+
+# select the gene for which you want the dependency values to be displayed
+target.gene <- "SF3A1"
 ```
 
 # Data preprocessing
 ```{r, warning=FALSE}
+# specify the path to the processed gene-screening datasets
 path <-
   "C:/Users/Martin/Documents/Master/Thesis/genetic_dependency_detection/data/"
-dep.scores.DRIVE <- readRDS(paste0(path,"dep.scores.DRIVE.rds"))
-dep.scores.Achilles <- readRDS(paste0(path,"dep.scores.Achilles.rds"))
 
+# load processed gene-screening datasets
+dep.scores.DRIVE <- readRDS(paste0(path, "dep.scores.DRIVE.rds"))
+dep.scores.Achilles <- readRDS(paste0(path, "dep.scores.Achilles.rds"))
+
+# specify the path to the processed CCLE expression dataset
 path <- "C:/Users/Martin/Documents/Master/Thesis/CCLE_data/"
 
-# load CCLE dataset
-expression.data <- readRDS(paste0(path,"Expression_Files/expression.data.rds"))
+# load processed CCLE expression dataset
+expression.data <- readRDS(paste0(path, "Expression_Files/expression.data.rds"))
 
 # change rownames format
 rownames(expression.data) <- 
-  substr(rownames(expression.data),1,nchar(rownames(expression.data))-3)
+  substr(rownames(expression.data), 1, nchar(rownames(expression.data)) - 3)
 
 # make rownames to first column
 expression.data$entrez.gene.id <- rownames(expression.data)
@@ -77,26 +93,25 @@ rm(path)
 
 ```{r}
 expression.class.gene <- 
-  t(expression.data[expression.data$entrez.gene.id==classification.gene.entrez,-1])
+  t(expression.data[
+    expression.data$entrez.gene.id == classification.gene.entrez, -1])
 expression.class.gene <- as.data.frame(expression.class.gene)
 expression.class.gene$CCLE_ID <- rownames(expression.class.gene)
 rownames(expression.class.gene) <- NULL
-colnames(expression.class.gene) <- c("expr.level","CCLE_ID")
+colnames(expression.class.gene) <- c("expr.level", "CCLE_ID")
 ```
 
 # Classification
 ```{r}
-sample.share <- 0.2
-
 class.tables <- create.classification.table.expr(
-  sample.share,expression.class.gene,dep.scores.DRIVE,dep.scores.Achilles)
+  sample.share ,expression.class.gene, dep.scores.DRIVE,dep.scores.Achilles)
 
 class.table.DRIVE <- class.tables$DRIVE
 colnames(class.table.DRIVE)[2] <- "isMutated"
 class.table.Achilles <- class.tables$Achilles
 colnames(class.table.Achilles)[2] <- "isMutated"
 
-rm(sample.share, expression.class.gene,class.tables)
+rm(sample.share, expression.class.gene, class.tables)
 
 # show one table for illustration
 class.table.DRIVE %>%
@@ -110,32 +125,31 @@ class.table.DRIVE %>%
 # Do the distributions of both sampes differ?
 ```{r}
 boxplot.target.gene.Achilles <- 
-  create.dep.score.boxplots(dep.scores=dep.scores.Achilles,
-                            target.gene=target.gene,
-                            genotype=classification.gene.HUGO,
-                            class.table=class.table.Achilles,
-                            dataset="Achilles",
+  create.dep.score.boxplots(dep.scores = dep.scores.Achilles,
+                            target.gene = target.gene,
+                            genotype = classification.gene.HUGO,
+                            class.table = class.table.Achilles,
+                            dataset = "Achilles",
                             pos.p.value = 0.7,
                             sample.name.1 = "-\nlowly-expressing",
                             sample.name.2 = "-\nhighly-expressing",
                             show.y.label = F)
 
 boxplot.target.gene.DRIVE <- 
-  create.dep.score.boxplots(dep.scores=dep.scores.DRIVE,
-                            target.gene=target.gene,
-                            genotype=classification.gene.HUGO,
-                            class.table=class.table.DRIVE,
-                            dataset="DRIVE",
+  create.dep.score.boxplots(dep.scores = dep.scores.DRIVE,
+                            target.gene = target.gene,
+                            genotype = classification.gene.HUGO,
+                            class.table = class.table.DRIVE,
+                            dataset = "DRIVE",
                             pos.p.value = 0.7,
                             sample.name.1 = "-\nlowly-expressing",
-                            sample.name.2 = "-\nhighly-expressing",
-                            show.y.label = T)
+                            sample.name.2 = "-\nhighly-expressing")
 
-plot <- grid.arrange(boxplot.target.gene.DRIVE,boxplot.target.gene.Achilles,ncol=2)
+plot <- grid.arrange(boxplot.target.gene.DRIVE, boxplot.target.gene.Achilles,
+                     ncol=2)
+```
 
-# # save plot
-# plot_path <-
-# "C:/Users/Martin/Documents/Master/Thesis/report/plots/boxplots/"
-# ggsave(file=paste0(plot_path,"SNRPF_SNRPF_expr.svg"), plot=plot)
-# ggsave(file=paste0(plot_path,"SNRPF_SNRPF_expr.png"), plot=plot)
+Here are the package versions for successful reproduction.
+```{r, session_info, include=T, echo=T, results='markup'}
+sessionInfo()
 ```

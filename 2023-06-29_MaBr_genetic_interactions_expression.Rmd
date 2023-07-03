@@ -54,12 +54,12 @@ library(CePa)
 First, we define the input data for the workflow: the gene we use for classification into high and low expressing cell lines, the sample share that determines how many cell lines are considered and the target genes to be displayed in the volcano plots.
 ```{r}
 # choose the genes that should be labeled in the result plots
-target.genes <- c("FUBP1","SF3A1")
+target.genes <- c("SMNDC1","EIF3A")
 
 # select the gene on which to base the classification
 # you must specify the gene name and its Entrez ID
-classification.gene.HUGO <- "FUBP1"
-classification.gene <- "8880"
+classification.gene.HUGO <- "SMNDC1"
+classification.gene <- "10285"
 
 # select the sample portion of the cell lines
 # e.g. 0.2 means that 20% with highest expression are tested
@@ -156,6 +156,7 @@ class.table.DRIVE %>%
 
 # Comparion between highly expressing and lowly expressing cell lines
 To test whether the two samples respond differently to the knockout or the knockdown of a specific gene, we calculate the mean differences between the dependency scores of both samples for each gene. We then compare the two samples using various statistical tests.
+
 ## Welch's t-test
 ```{r}
 res <- calc.mean.diffs.and.p.values(

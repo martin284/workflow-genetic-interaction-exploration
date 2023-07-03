@@ -48,8 +48,8 @@ library(dplyr)
 ```{r}
 # select the gene on which to base the classification
 # you must specify the gene name and its Entrez ID
-classification.gene.HUGO <- "FUBP1"
-classification.gene.entrez <- "8880"
+classification.gene.HUGO <- "SMNDC1"
+classification.gene.entrez <- "10285"
 
 # select the sample portion of the cell lines
 # e.g. 0.2 means that 20% with highest expression are tested
@@ -57,7 +57,7 @@ classification.gene.entrez <- "8880"
 sample.share <- 0.2
 
 # select the gene for which you want the dependency values to be displayed
-target.gene <- "SF3A1"
+target.gene <- "EIF3A"
 ```
 
 # Data preprocessing
